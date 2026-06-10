@@ -238,6 +238,7 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
 <script>
 var CAMP_NAME = "서초1캠프";
 var API_URL   = "https://script.google.com/macros/s/AKfycbyGjuEVD-6oWjLBywITh-5PBzlO1QyQPSs78Dyy2GJFaiOpblhRUD1rB-gA0CbRD6jD/exec";
+var DATA_URL  = "https://cdn.jsdelivr.net/gh/runnerweb/runner1@main/data/schedule.json";
 
 var KD = ["일","월","화","수","목","금","토"];
 function toDS(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
@@ -313,7 +314,7 @@ function buildWindow(){
 /* ── API ── */
 function loadFromAPI(){
   var xhr=new XMLHttpRequest();
-  xhr.open("GET",API_URL,true); xhr.timeout=90000;
+  xhr.open("GET",DATA_URL+"?_t="+Date.now(),true); xhr.timeout=15000;
   xhr.onload=function(){
     if(xhr.status>=200&&xhr.status<300){
       try{
@@ -363,9 +364,9 @@ function bRows(days,wc){
   var h=colg(days.length);
   if(!DRIVERS.length)return "<tr><td colspan='"+(2+days.length)+"' style='text-align:center;padding:40px;color:var(--text3);font-size:13px'>등록된 기사가 없습니다</td></tr>";
   DRIVERS.forEach(function(d){
-    h+="<tr data-n='"+d.name.toLowerCase()+"' data-i='"+d.id.toLowerCase()+"'>";
-    h+="<td class='nc'>"+d.name+"<div class='sub'>"+d.id+"</div></td>";
-    h+="<td class='rc'>"+d.route+"</td>";
+    h+="<tr data-n='"+d.name.toLowerCase()+"'>";
+    h+="<td class='nc'>"+d.name+"</td>";
+    
     days.forEach(function(wd){
       var tc="sc "+(wd.isToday?"tod":wc==="w1h"?"w1":"w2");
       var v=(d.schedule&&d.schedule[wd.ds])||"";
@@ -392,10 +393,10 @@ function bMobile(w1,w2){
       });
       return g+"</div>";
     }
-    html+="<div class='driver-card' data-n='"+d.name.toLowerCase()+"' data-i='"+d.id.toLowerCase()+"'>"
+    html+="<div class='driver-card' data-n='"+d.name.toLowerCase()+"'>"
       +"<div class='dc-head'><div class='dc-avatar'>"+getInitial(d.name)+"</div>"
-      +"<div class='dc-info'><div class='dc-name'>"+d.name+"</div><div class='dc-sub'>"+d.id+"</div></div>"
-      +"<div class='dc-route'>"+d.route+"</div><div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
+      +"<div class='dc-info'><div class='dc-name'>"+d.name+"</div></div>"
+      +"<div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
       +"<div class='dc-body'>"
       +"<div class='week-grid-label wgl-w1'>🟠 1주차 "+fmt(w1[0].ds)+"~"+fmt(w1[6].ds)+"</div>"+dg(w1)
       +(w2.length?"<div class='week-grid-label wgl-w2'>🔵 2주차 "+fmt(w2[0].ds)+"~"+fmt(w2[w2.length-1].ds)+"</div>"+dg(w2):"")
@@ -434,10 +435,10 @@ window.addEventListener("resize",fixH);
 document.getElementById("cp-search").addEventListener("input",function(){
   var q=this.value.toLowerCase().trim();
   document.querySelectorAll("#cp-tbody-w1 tr[data-n],#cp-tbody-w2 tr[data-n]").forEach(function(tr){
-    tr.classList.toggle("hid",!(!q||tr.dataset.n.indexOf(q)>-1||tr.dataset.i.indexOf(q)>-1));
+    tr.classList.toggle("hid",!(!q||tr.dataset.n.indexOf(q)>-1));
   });
   document.querySelectorAll(".driver-card[data-n]").forEach(function(c){
-    c.classList.toggle("hid",!(!q||c.dataset.n.indexOf(q)>-1||c.dataset.i.indexOf(q)>-1));
+    c.classList.toggle("hid",!(!q||c.dataset.n.indexOf(q)>-1));
   });
   var cnt=document.querySelectorAll("#cp-tbody-w1 tr[data-n]:not(.hid)").length;
   document.getElementById("cp-count").textContent=cnt+"명 표시";
@@ -489,7 +490,7 @@ function showLocModal(){
   document.getElementById("loc-modal").style.display="flex";
   var btn=document.getElementById("btn-loc"); if(btn)btn.classList.add("loading");
   var xhr=new XMLHttpRequest();
-  xhr.open("GET",API_URL+"?action=getCampLocations",true); xhr.timeout=15000;
+  xhr.open("GET",API_URL+"?action=getCampLocations&_t="+Date.now(),true); xhr.timeout=15000;
   xhr.onload=function(){
     if(btn)btn.classList.remove("loading");
     try{
