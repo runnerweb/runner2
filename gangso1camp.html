@@ -313,9 +313,10 @@ function buildWindow(){
 
 /* ── API ── */
 function loadFromAPI(){
-  // 1단계: GitHub JSON 먼저 빠르게 표시 (캐시된 데이터)
-  // 2단계: Apps Script에서 최신 데이터 확인 후 갱신
-  var loaded = false;
+  // Apps Script (nocache=1) → 항상 최신 백업 시트 직접 읽기
+  // GitHub JSON → Apps Script 응답 전 빠른 초기 표시용
+  var loaded = false;   // 화면에 이미 표시됐는지 여부
+  var asFinished = false; // Apps Script 응답 완료 여부
 
   function processData(data) {
     if(data.error) throw new Error(data.error);
@@ -333,29 +334,32 @@ function loadFromAPI(){
     if(data.notice){var nb=document.getElementById("cp-notice");nb.style.display="block";nb.textContent=data.notice;}
   }
 
-  // Apps Script 직접 호출 (nocache=1 → 항상 최신 백업 시트 읽기)
+  // ── Apps Script 직접 호출 (최신 백업 시트) ──
   var xhr=new XMLHttpRequest();
   xhr.open("GET",API_URL+"?nocache=1&_t="+Date.now(),true); xhr.timeout=30000;
   xhr.onload=function(){
+    asFinished=true;
     if(xhr.status>=200&&xhr.status<300){
       try{
         var data=JSON.parse(xhr.responseText);
         processData(data);
         buildWindow();
         if(!loaded){ hideOverlay(); loaded=true; }
+        // 이미 화면이 표시된 경우 부드럽게 갱신
         render(W1,W2);
       }catch(e){ if(!loaded){ showError("파싱 오류: "+e.message); } }
     }else{ if(!loaded){ showError("서버 오류 HTTP "+xhr.status); } }
   };
-  xhr.onerror=function(){ if(!loaded){ showError("네트워크 오류. 인터넷 연결을 확인해주세요."); } };
-  xhr.ontimeout=function(){ if(!loaded){ showError("요청 시간 초과. 다시 시도해주세요."); } };
+  xhr.onerror=function(){ asFinished=true; if(!loaded){ showError("네트워크 오류. 인터넷 연결을 확인해주세요."); } };
+  xhr.ontimeout=function(){ asFinished=true; if(!loaded){ showError("요청 시간 초과. 다시 시도해주세요."); } };
   xhr.send();
 
-  // GitHub JSON도 병렬 요청 (빠른 초기 표시용)
+  // ── GitHub JSON 병렬 요청 (빠른 초기 표시용) ──
   var xhrFast=new XMLHttpRequest();
   xhrFast.open("GET",DATA_URL+"?_t="+Date.now(),true); xhrFast.timeout=10000;
   xhrFast.onload=function(){
-    if(loaded) return; // Apps Script가 이미 응답했으면 무시
+    // Apps Script가 이미 응답했거나 화면이 표시됐으면 무시
+    if(loaded || asFinished) return;
     if(xhrFast.status>=200&&xhrFast.status<300){
       try{
         var data=JSON.parse(xhrFast.responseText);
