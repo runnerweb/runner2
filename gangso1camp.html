@@ -313,7 +313,7 @@ function buildWindow(){
 /* ── API ── */
 function loadFromAPI(){
   var xhr=new XMLHttpRequest();
-  xhr.open("GET",API_URL,true); xhr.timeout=90000;
+  xhr.open("GET",API_URL+"?&_t="+Date.now(),true); xhr.timeout=90000;
   xhr.onload=function(){
     if(xhr.status>=200&&xhr.status<300){
       try{
@@ -489,7 +489,7 @@ function showLocModal(){
   document.getElementById("loc-modal").style.display="flex";
   var btn=document.getElementById("btn-loc"); if(btn)btn.classList.add("loading");
   var xhr=new XMLHttpRequest();
-  xhr.open("GET",API_URL+"?action=getCampLocations",true); xhr.timeout=15000;
+  xhr.open("GET",API_URL+"?action=getCampLocations&_t="+Date.now(),true); xhr.timeout=15000;
   xhr.onload=function(){
     if(btn)btn.classList.remove("loading");
     try{
