@@ -342,11 +342,19 @@ function loadFromAPI(){
     if(xhr.status>=200&&xhr.status<300){
       try{
         var data=JSON.parse(xhr.responseText);
+        var prevDrivers=JSON.stringify(DRIVERS); // 기존 데이터 스냅샷
         processData(data);
         buildWindow();
-        if(!loaded){ hideOverlay(); loaded=true; }
-        // 이미 화면이 표시된 경우 부드럽게 갱신
-        render(W1,W2);
+        if(!loaded){
+          // 아직 화면 미표시 → 오버레이 제거 후 표시
+          hideOverlay(); loaded=true;
+          render(W1,W2);
+        } else {
+          // 이미 화면 표시됨 → 데이터가 실제로 바뀐 경우에만 갱신
+          if(JSON.stringify(DRIVERS) !== prevDrivers){
+            render(W1,W2);
+          }
+        }
       }catch(e){ if(!loaded){ showError("파싱 오류: "+e.message); } }
     }else{ if(!loaded){ showError("서버 오류 HTTP "+xhr.status); } }
   };
