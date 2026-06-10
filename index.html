@@ -69,12 +69,12 @@ body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR",sans-seri
   <div class="divider"></div>
   <div class="section-label">⚙️ 관리</div>
   <div class="special-grid">
-    <a class="special-card" href="백업.html">
+    <a class="special-card" href="backup.html">
       <div class="camp-icon">🗄️</div>
       <div class="camp-name">백업</div>
       <div class="camp-stat">전체 데이터</div>
     </a>
-    <a class="special-card" href="운영자.html">
+    <a class="special-card" href="manager.html">
       <div class="camp-icon">👤</div>
       <div class="camp-name">운영자</div>
       <div class="camp-stat">관리자 뷰</div>
@@ -83,11 +83,22 @@ body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR",sans-seri
 </div>
 
 <script>
-var API_URL = "https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbxDnJCXQOrpZyXbQwjG4kYqpxPRal7t1JaYrLBO71p77YIrBNLUnhEEym_V0Nz0xhJZ/exec";
 
-var CAMPS = ["강서1캠프","서초1캠프","수원1캠프","시흥1캠프","시흥2캠프","안양1캠프","인천7캠프","인천8캠프","일산5캠프"];
-var KD = ["일","월","화","수","목","금","토"];
+// 캠프명(한글) → 영문 파일명 매핑
+var CAMP_MAP = [
+  {kr:"강서1캠프", en:"gangseo1"},
+  {kr:"서초1캠프", en:"seocho1"},
+  {kr:"수원1캠프", en:"suwon1"},
+  {kr:"시흥1캠프", en:"siheung1"},
+  {kr:"시흥2캠프", en:"siheung2"},
+  {kr:"안양1캠프", en:"anyang1"},
+  {kr:"인천7캠프", en:"incheon7"},
+  {kr:"인천8캠프", en:"incheon8"},
+  {kr:"일산5캠프", en:"ilsan5"},
+];
 
+var KD=["일","월","화","수","목","금","토"];
 function toDS(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 var now=new Date();now.setDate(now.getDate()+1);
 var TODAY=toDS(now);
@@ -98,15 +109,14 @@ function isWork(v){
   return !(v==="휴무"||v==="고정휴무"||v==="계획된 휴무"||v.indexOf("휴가")>-1||v.indexOf("병가")>-1||v.indexOf("퇴사")>-1||v.indexOf("용차")>-1||v.indexOf("미입차")>-1);
 }
 
-// 먼저 카드 뼈대 렌더 (로딩 상태)
 function renderSkeleton(){
   var html="";
-  CAMPS.forEach(function(c){
-    html+='<a class="camp-card" href="'+c+'.html">'
+  CAMP_MAP.forEach(function(c){
+    html+='<a class="camp-card" href="'+c.en+'.html">'
       +'<div class="camp-icon">📦</div>'
-      +'<div class="camp-name">'+c+'</div>'
-      +'<div class="camp-stat" id="stat-'+encodeURIComponent(c)+'">집계 중…</div>'
-      +'<div class="camp-today" id="today-'+encodeURIComponent(c)+'"></div>'
+      +'<div class="camp-name">'+c.kr+'</div>'
+      +'<div class="camp-stat" id="stat-'+c.en+'">집계 중…</div>'
+      +'<div class="camp-today" id="today-'+c.en+'"></div>'
       +'</a>';
   });
   document.getElementById("camp-grid").innerHTML=html;
@@ -124,33 +134,33 @@ function loadStats(){
 
         // 캠프별 집계
         var campMap={};
-        CAMPS.forEach(function(c){campMap[c]={total:0,wk:0,of:0};});
+        CAMP_MAP.forEach(function(c){campMap[c.kr]={en:c.en,total:0,wk:0,of:0};});
         drivers.forEach(function(d){
           if(!d.camp||!d.name)return;
-          if(!campMap[d.camp])return; // 목록에 없는 캠프 스킵
+          if(!campMap[d.camp])return;
           campMap[d.camp].total++;
           if(isWork((d.schedule&&d.schedule[TODAY])||""))campMap[d.camp].wk++;
           else campMap[d.camp].of++;
         });
 
-        CAMPS.forEach(function(c){
-          var info=campMap[c];
-          var statEl=document.getElementById("stat-"+encodeURIComponent(c));
-          var todEl=document.getElementById("today-"+encodeURIComponent(c));
+        CAMP_MAP.forEach(function(c){
+          var info=campMap[c.kr];
+          var statEl=document.getElementById("stat-"+c.en);
+          var todEl=document.getElementById("today-"+c.en);
           if(statEl)statEl.textContent="총 "+info.total+"명";
           if(todEl)todEl.innerHTML='<span class="ct-wk">출근 '+info.wk+'</span><span class="ct-of">휴무 '+info.of+'</span>';
         });
       }catch(e){
-        CAMPS.forEach(function(c){
-          var el=document.getElementById("stat-"+encodeURIComponent(c));
+        CAMP_MAP.forEach(function(c){
+          var el=document.getElementById("stat-"+c.en);
           if(el)el.textContent="오류";
         });
       }
     }
   };
   xhr.onerror=xhr.ontimeout=function(){
-    CAMPS.forEach(function(c){
-      var el=document.getElementById("stat-"+encodeURIComponent(c));
+    CAMP_MAP.forEach(function(c){
+      var el=document.getElementById("stat-"+c.en);
       if(el)el.textContent="연결 오류";
     });
   };
