@@ -320,7 +320,7 @@ function loadFromAPI(){
 
   function processData(data) {
     if(data.error) throw new Error(data.error);
-    var raw=(data.drivers||[]).filter(function(d){return d.camp===CAMP_NAME;});
+    var raw=(data.drivers||[]).filter(function(d){return d.camp===CAMP_NAME && d.name;});
     var seen={};
     raw.forEach(function(d){
       if(!seen[d.name]){seen[d.name]=d;}
@@ -402,9 +402,9 @@ function bRows(days,wc){
   var h=colg(days.length);
   if(!DRIVERS.length)return "<tr><td colspan='"+(2+days.length)+"' style='text-align:center;padding:40px;color:var(--text3);font-size:13px'>등록된 기사가 없습니다</td></tr>";
   DRIVERS.forEach(function(d){
-    h+="<tr data-n='"+d.name.toLowerCase()+"' data-i='"+d.id.toLowerCase()+"'>";
-    h+="<td class='nc'>"+d.name+"<div class='sub'>"+d.id+"</div></td>";
-    h+="<td class='rc'>"+d.route+"</td>";
+    h+="<tr data-n='"+String(d.name||"").toLowerCase()+"' data-i='"+String(d.id||"").toLowerCase()+"'>";
+    h+="<td class='nc'>"+(d.name||"")+"<div class='sub'>"+(d.id||"")+"</div></td>";
+    h+="<td class='rc'>"+(d.route||"")+"</td>";
     
     days.forEach(function(wd){
       var tc="sc "+(wd.isToday?"tod":wc==="w1h"?"w1":"w2");
@@ -432,10 +432,10 @@ function bMobile(w1,w2){
       });
       return g+"</div>";
     }
-    html+="<div class='driver-card' data-n='"+d.name.toLowerCase()+"' data-i='"+d.id.toLowerCase()+"'>"
-      +"<div class='dc-head'><div class='dc-avatar'>"+getInitial(d.name)+"</div>"
-      +"<div class='dc-info'><div class='dc-name'>"+d.name+"</div><div class='dc-sub'>"+d.id+"</div></div>"
-      +"<div class='dc-route'>"+d.route+"</div><div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
+    html+="<div class='driver-card' data-n='"+String(d.name||"").toLowerCase()+"' data-i='"+String(d.id||"").toLowerCase()+"'>"
+      +"<div class='dc-head'><div class='dc-avatar'>"+getInitial(d.name||"")+"</div>"
+      +"<div class='dc-info'><div class='dc-name'>"+(d.name||"")+"</div><div class='dc-sub'>"+(d.id||"")+"</div></div>"
+      +"<div class='dc-route'>"+(d.route||"")+"</div><div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
       +"<div class='dc-body'>"
       +"<div class='week-grid-label wgl-w1'>🟠 1주차 "+fmt(w1[0].ds)+"~"+fmt(w1[6].ds)+"</div>"+dg(w1)
       +(w2.length?"<div class='week-grid-label wgl-w2'>🔵 2주차 "+fmt(w2[0].ds)+"~"+fmt(w2[w2.length-1].ds)+"</div>"+dg(w2):"")
@@ -445,7 +445,7 @@ function bMobile(w1,w2){
 }
 
 function render(w1,w2){
-  var wc=DRIVERS.filter(function(d){return isWork(d.schedule[TODAY]||"");}).length;
+  var wc=DRIVERS.filter(function(d){return isWork((d.schedule&&d.schedule[TODAY])||"");}).length;
   var oc=DRIVERS.length-wc;
   var dow=KD[new Date(TODAY+"T00:00:00").getDay()];
   document.getElementById("cp-today").textContent="PDD "+TODAY+" ("+dow+")";
