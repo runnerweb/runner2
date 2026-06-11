@@ -90,13 +90,13 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
 
 /* ── chips ── */
 .chip{display:inline-flex;align-items:center;justify-content:center;border-radius:2px;padding:3px 5px;font-size:9px;font-weight:600;min-width:38px;line-height:1.4;text-align:center;word-break:break-all;white-space:normal;max-width:88px}
-.cw{background:#9cb81b;color:#fff;border:1px solid #8aa518}
+.cw{background:#9be4fc;color:#00769d;border:1px solid #7dd4ef}
 .co{background:#fe7566;color:#fff;border:1px solid #e5614f}
 .cf{background:#fe7566;color:#fff;border:1px solid #e5614f}
 .cr{background:var(--os);color:var(--orange);border:1px solid rgba(234,88,12,.22);font-size:8px;min-width:0}
-.cg{background:rgba(9,189,230,.1);color:#09bde6;border:1px solid #09bde6;font-size:8px;min-width:0}
+.cg{background:rgba(9,189,230,.1);color:#1e1b4b;border:1px solid #09bde6;font-size:8px;min-width:0}
 .cv{background:rgba(59,130,246,.1);color:#2563eb;border:1px solid rgba(59,130,246,.22)}
-.cs{background:rgba(236,72,153,.1);color:#db2777;border:1px solid rgba(236,72,153,.22)}
+.cs{background:#fe7566;color:#fff;border:1px solid #e5614f}
 .cq{background:rgba(156,163,175,.12);color:#6b7280;border:1px solid rgba(156,163,175,.25)}
 .ce{color:var(--text4);font-size:8px;min-width:0}
 
@@ -393,8 +393,8 @@ function bMobile(w1,w2){
       +"<div class='dc-info'><div class='dc-name'>"+escH(d.name||"")+"</div><div class='dc-sub'>"+escH(d.id||"")+"</div></div>"
       +"<div class='dc-route'>"+escH(d.route||"")+"</div><div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
       +"<div class='dc-body'>"
-      +"<div class='week-grid-label wgl-w1'>🟠 1주차 "+fmt(w1[0].ds)+"~"+fmt(w1[6].ds)+"</div>"+dg(w1)
-      +(w2.length?"<div class='week-grid-label wgl-w2'>🔵 2주차 "+fmt(w2[0].ds)+"~"+fmt(w2[w2.length-1].ds)+"</div>"+dg(w2):"")
+      +"<div class='week-grid-label wgl-w1'>🟠 1주차 "+fmt(w1[0].ds)+"~"+fmt(w1[6].ds)+" &nbsp;<span style='font-size:9px;opacity:.8'>스케줄 변경 불가</span></div>"+dg(w1)
+      +(w2.length?"<div class='week-grid-label wgl-w2'>🔵 2주차 "+fmt(w2[0].ds)+"~"+fmt(w2[w2.length-1].ds)+" &nbsp;<span style='font-size:9px;color:#dc2626'>※ 스케줄 변경될 수 있음</span></div>"+dg(w2):"")
       +"</div></div>";
   });
   return html;
