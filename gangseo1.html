@@ -490,6 +490,73 @@ function backToToday(){
   var b2=document.getElementById("wl2-badge");if(b2)b2.style.display="";
   render(W1,W2);
 }
+
+/* ── 캠프 위치 팝업 ── */
+function showLocModal(){
+  var btn=document.getElementById("btn-loc");if(btn)btn.classList.add("loading");
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",API_URL+"?action=getCampLocations&_t="+Date.now(),true);xhr.timeout=15000;
+  xhr.onload=function(){
+    if(btn)btn.classList.remove("loading");
+    try{
+      var res=JSON.parse(xhr.responseText);
+      var locs=res.locations||{};
+      var entries=locs[CAMP_NAME]||[];
+      openLocPopup_(CAMP_NAME, entries);
+    }catch(e){ alert("오류: "+e.message); }
+  };
+  xhr.onerror=xhr.ontimeout=function(){
+    if(btn)btn.classList.remove("loading");
+    alert("네트워크 오류. 다시 시도해주세요.");
+  };
+  xhr.send();
+}
+function openLocPopup_(campName, entries){
+  var popup=window.open('','_blank','width=440,height=520,scrollbars=yes,resizable=yes');
+  if(!popup){ alert("팝업이 차단됐습니다. 브라우저에서 팝업 허용 후 다시 시도해주세요."); return; }
+  var doc=popup.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">');
+  doc.write('<meta name="viewport" content="width=device-width,initial-scale=1.0">');
+  doc.write('<title>'+campName+' 위치</title>');
+  doc.write('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">');
+  doc.write('<style>*{box-sizing:border-box;margin:0;padding:0}');
+  doc.write('body{font-family:"Noto Sans KR",sans-serif;background:#f4f5fb;padding:20px}');
+  doc.write('.header{background:#6366f1;color:#fff;padding:16px 20px;border-radius:5px;margin-bottom:16px;font-size:16px;font-weight:700}');
+  doc.write('.card{background:#fff;border:1px solid #e0e3f0;border-radius:5px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}');
+  doc.write('.card:hover{box-shadow:0 4px 12px rgba(99,102,241,.15);border-color:#6366f1}');
+  doc.write('.gubun{font-size:10px;color:#9ca3af;margin-bottom:4px}');
+  doc.write('.addr{font-size:14px;color:#6366f1;font-weight:600;text-decoration:underline;text-underline-offset:2px}');
+  doc.write('.hint{font-size:11px;color:#9ca3af;margin-top:4px}');
+  doc.write('.empty{text-align:center;padding:40px;color:#9ca3af;font-size:14px}</style>');
+  doc.write('</head><body>');
+  doc.write('<div class="header">📍 '+campName+' 위치</div>');
+  if(!entries||!entries.length){
+    doc.write('<div class="empty">📭 위치 정보가 없습니다.</div>');
+  } else {
+    entries.forEach(function(e){
+      var addr=e.address||"", gubun=e.gubun||"";
+      doc.write('<div class="card">');
+      doc.write('<div class="gubun">'+gubun+'</div>');
+      doc.write('<div class="addr">'+addr+'</div>');
+      doc.write('<div class="hint">📍 클릭하면 티맵으로 열립니다</div>');
+      doc.write('</div>');
+    });
+  }
+  doc.write('<script>');
+  doc.write('document.querySelectorAll(".card").forEach(function(card,i){');
+  doc.write('var addrs='+JSON.stringify(entries.map(function(e){return e.address||""}))+';');
+  doc.write('card.onclick=function(){');
+  doc.write('var addr=addrs[i];');
+  doc.write('var m=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);');
+  doc.write('if(m){location.href="tmap://search?name="+encodeURIComponent(addr);}');
+  doc.write('else{window.open("https://www.tmap.co.kr/tmap2/common/search.do?searchText="+encodeURIComponent(addr),"_blank");}');
+  doc.write('};});');
+  doc.write('<\/script>');
+  doc.write('</body></html>');
+  doc.close();
+}
+function closeLocModal(){ var m=document.getElementById("loc-modal"); if(m)m.style.display="none"; }
 </script>
 </body>
 </html>
