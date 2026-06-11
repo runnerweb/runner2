@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>백업 스케줄</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+:root{
+  --bg:#f4f5fb;--surface:#fff;--surface2:#eef0f9;--border:#e0e3f0;
+  --accent:#6366f1;--acc-soft:rgba(99,102,241,.09);
+  --accent2:#818cf8;--accent-dark:#4f46e5;
+  --green:#16a34a;--gs:rgba(22,163,74,.1);
+  --red:#dc2626;--rs:rgba(220,38,38,.1);
+  --orange:#ea580c;--os:rgba(234,88,12,.1);
+  --yellow:#1e40af;--text:#1e1b4b;--text2:#4b5563;--text3:#9ca3af;--text4:#d1d5db;
+  --theadbg:#f1eafa;--w1bg:#fff;--w2bg:#fff;
+  --todbg:rgba(99,102,241,.08);--todbd:rgba(99,102,241,.35);
+  --shadow:0 2px 8px rgba(99,102,241,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR",sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+/* ── topbar ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:0 16px;position:sticky;top:0;z-index:100}
+.topbar-r1{display:flex;align-items:center;gap:10px;padding:11px 0}
+.topbar-icon{width:32px;height:32px;border-radius:5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 0 12px rgba(99,102,241,.3);flex-shrink:0}
+.back-btn{background:none;border:none;cursor:pointer;font-size:13px;color:var(--text2);padding:5px 8px;border-radius:5px;font-family:"Noto Sans KR",sans-serif;display:flex;align-items:center;gap:4px;transition:background .15s}
+.back-btn:hover{background:var(--surface2)}
+.topbar-center{flex:1;min-width:0}
+.topbar-center h2{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.search-box{position:relative}
+.search-box input{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:6px 10px 6px 28px;color:var(--text);font-size:12px;font-family:"Noto Sans KR",sans-serif;width:130px;outline:none;transition:all .18s}
+.search-box input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1);width:150px}
+.search-box::before{content:"🔍";position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:10px;opacity:.5;pointer-events:none}
+.count-badge{background:var(--acc-soft);border:1px solid rgba(99,102,241,.2);border-radius:5px;padding:3px 10px;font-size:10px;color:var(--accent);font-family:"JetBrains Mono",monospace;white-space:nowrap}
+.topbar-r2{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border);flex-wrap:wrap}
+.today-lbl{font-size:10px;color:var(--text2);font-family:"JetBrains Mono",monospace}
+.tchip-wrap{display:flex;gap:5px}
+.tchip{padding:2px 9px;border-radius:5px;font-size:10px;font-weight:600;white-space:nowrap}
+.tchip.wk{background:var(--gs);color:var(--green);border:1px solid rgba(22,163,74,.22)}
+.tchip.of{background:var(--rs);color:var(--red);border:1px solid rgba(220,38,38,.18)}
+.hist-btn{background:var(--acc-soft);color:var(--accent);border:1px solid rgba(99,102,241,.2);border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:"Noto Sans KR",sans-serif;margin-left:auto}
+.hist-btn:hover{background:rgba(99,102,241,.15)}
+
+/* ── notice / hist banner ── */
+.notice-bar{background:var(--os);border:1px solid rgba(234,88,12,.25);border-radius:5px;padding:8px 14px;margin:8px 16px;font-size:11px;color:var(--orange)}
+#hist-banner{display:none;background:rgba(99,102,241,.08);border-bottom:2px solid var(--accent);padding:10px 20px;font-size:12px;color:var(--accent);font-weight:600}
+#hist-banner button{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:3px 12px;font-size:11px;cursor:pointer;margin-left:12px;font-family:"Noto Sans KR",sans-serif}
+
+/* ── legend ── */
+.legend{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 16px;padding:7px 12px;background:var(--surface);border:1px solid var(--border);border-radius:5px}
+.legend-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)}
+
+/* ── week label ── */
+.week-label{display:flex;align-items:center;gap:8px;margin:14px 16px 6px}
+.wk-badge{font-size:12px;font-weight:700;padding:3px 12px;border-radius:5px}
+.wk-badge.w1{background:var(--acc-soft);color:var(--accent);border:1px solid rgba(99,102,241,.2)}
+.wk-badge.w2{background:rgba(99,102,241,.05);color:var(--accent2);border:1px solid rgba(99,102,241,.15)}
+.wk-range{font-size:11px;color:var(--text2);font-family:"JetBrains Mono",monospace}
+
+/* ── table ── */
+.tbl-outer{padding:0 16px 32px}
+.tbl-scroll{overflow-x:auto;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:5px;background:var(--surface);box-shadow:var(--shadow)}
+.tbl-scroll table{border-collapse:collapse;table-layout:fixed;width:max-content;min-width:100%}
+thead th{position:sticky;top:0;z-index:10;background:var(--theadbg)}
+th{padding:8px 6px;text-align:center;font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--text);border-bottom:1px solid var(--border);white-space:nowrap;background:var(--theadbg)}
+th.dcol{text-align:center;background:#f1eafa!important}
+th.w1h{background:#c3b5e7!important;color:#fff;padding-top:11px;padding-bottom:11px;font-size:17px}
+th.w2h{background:#c3b5e7!important;color:#fff;padding-top:11px;padding-bottom:11px;font-size:17px}
+th.toh{background:rgba(99,102,241,.14)!important;color:var(--accent)!important;border-top:2px solid var(--accent)}
+.dnum{display:block;font-size:15px;font-weight:700;font-family:"JetBrains Mono",monospace;line-height:1}
+.dnum-wrap{display:flex;align-items:center;justify-content:center;gap:2px}
+.dfire-left{font-size:11px;line-height:1}
+.dday{display:block;font-size:10px;margin-top:1px}
+.dtd{display:inline-block;background:var(--accent);color:#fff;font-size:7px;font-weight:700;padding:1px 4px;border-radius:5px;font-family:"JetBrains Mono",monospace;letter-spacing:.5px;margin-top:2px}
+.sun{color:#ef4444}.sat{color:#3b82f6}.wdy{color:var(--text2)}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:hover{background:rgba(99,102,241,.03)}
+tbody tr.hid{display:none}
+td{padding:8px 5px;vertical-align:top}
+td.nc{font-size:12px;font-weight:600}
+td.nc .sub{font-size:9px;color:var(--text3);font-family:"JetBrains Mono",monospace;margin-top:1px}
+td.rc{font-size:10px;font-family:"JetBrains Mono",monospace;color:#6004c1;font-weight:700}
+td.sc{text-align:center;padding:5px 3px;vertical-align:middle}
+td.sc.w1{background:var(--w1bg)}td.sc.w2{background:var(--w2bg)}
+td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-right:1px solid var(--todbd)}
+
+/* ── chips ── */
+.chip{display:inline-flex;align-items:center;justify-content:center;border-radius:2px;padding:3px 5px;font-size:9px;font-weight:600;min-width:38px;line-height:1.4;text-align:center;word-break:break-all;white-space:normal;max-width:88px}
+.cw{background:#9be4fc;color:#00769d;border:1px solid #7dd4ef}
+.co{background:#fe7566;color:#fff;border:1px solid #e5614f}
+.cf{background:#fe7566;color:#fff;border:1px solid #e5614f}
+.cr{background:var(--os);color:var(--orange);border:1px solid rgba(234,88,12,.22);font-size:8px;min-width:0}
+.cg{background:rgba(9,189,230,.1);color:#1e1b4b;border:1px solid #09bde6;font-size:8px;min-width:0}
+.cv{background:rgba(59,130,246,.1);color:#2563eb;border:1px solid rgba(59,130,246,.22)}
+.cs{background:#fe7566;color:#fff;border:1px solid #e5614f}
+.cq{background:rgba(156,163,175,.12);color:#6b7280;border:1px solid rgba(156,163,175,.25)}
+.ce{color:var(--text4);font-size:8px;min-width:0}
+
+/* ── mobile cards ── */
+.mobile-list{display:none;padding:0 12px 32px}
+.driver-card{background:var(--surface);border:1px solid var(--border);border-radius:5px;margin-bottom:10px;box-shadow:var(--shadow);overflow:hidden}
+.driver-card.hid{display:none}
+.dc-head{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.dc-avatar{width:38px;height:38px;border-radius:5px;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;font-weight:700}
+.dc-info{flex:1;min-width:0}
+.dc-name{font-size:14px;font-weight:700;text-align:left}
+.dc-sub{font-size:10px;color:var(--text2);font-family:"JetBrains Mono",monospace;margin-top:1px;text-align:left}
+.dc-route{font-size:10px;font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:700;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-radius:5px;padding:3px 8px;flex-shrink:0}
+.dc-today{flex-shrink:0}
+.dc-chevron{font-size:12px;color:var(--text3);flex-shrink:0;transition:transform .2s}
+.driver-card.collapsed .dc-chevron{transform:rotate(-90deg)}
+.dc-body{padding:10px 14px 12px}
+.driver-card.collapsed .dc-body{display:none}
+.week-grid-label{font-size:10px;font-weight:700;margin-bottom:6px;padding:2px 8px;border-radius:5px;display:inline-block}
+.wgl-w1{background:var(--acc-soft);color:var(--accent)}
+.wgl-w2{background:rgba(99,102,241,.06);color:var(--accent2);margin-top:10px}
+.day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:2px}
+.day-cell{display:flex;flex-direction:column;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:5px 2px;min-height:58px}
+.day-cell.today-cell{background:var(--todbg);border-color:var(--todbd);border-width:1.5px}
+.dc-dnum{font-size:13px;font-weight:700;font-family:"JetBrains Mono",monospace;line-height:1}
+.dc-dnum-wrap{display:flex;align-items:center;justify-content:center;gap:1px}
+.dc-fire-left{font-size:9px;line-height:1}
+.dc-dday{font-size:9px;margin-top:1px}
+.dc-today-badge{font-size:7px;font-weight:700;background:var(--accent);color:#fff;border-radius:5px;padding:0 3px;margin-top:1px}
+.dc-chip{margin-top:4px}
+.dc-chip .chip{font-size:8px;padding:2px 3px;min-width:0}
+
+/* ── hist modal ── */
+
+/* ── 아이디복사 모달 ── */
+#id-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px}
+#id-modal .id-box{background:var(--surface);border-radius:8px;width:100%;max-width:500px;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,.22);overflow:hidden}
+.id-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:var(--theadbg);font-size:14px;font-weight:700;color:var(--text);flex-shrink:0}
+.id-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.id-search{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:6px 10px;color:var(--text);font-size:12px;font-family:"Noto Sans KR",sans-serif;outline:none;flex:1;min-width:120px;transition:border-color .15s}
+.id-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,.1)}
+.id-camp-sel{background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:6px 8px;color:var(--text);font-size:12px;font-family:"Noto Sans KR",sans-serif;outline:none;cursor:pointer}
+.id-camp-sel:focus{border-color:var(--accent)}
+.id-body{overflow-y:auto;flex:1}
+.id-table{width:100%;border-collapse:collapse;font-size:12px}
+.id-table thead th{position:sticky;top:0;background:var(--theadbg);padding:8px 10px;text-align:left;font-size:11px;font-weight:600;color:var(--text);border-bottom:1px solid var(--border);white-space:nowrap}
+.id-table tbody tr{border-bottom:1px solid var(--border);transition:background .1s;cursor:pointer}
+.id-table tbody tr:hover{background:var(--acc-soft)}
+.id-table tbody tr.copied-row{background:rgba(99,102,241,.12)}
+.id-table td{padding:8px 10px;color:var(--text);vertical-align:middle}
+.id-table td.td-camp{font-size:10px;color:var(--text3)}
+.id-table td.td-name{font-weight:600}
+.id-table td.td-id{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--accent)}.id-cell{display:flex;align-items:center;gap:5px}.id-cell span{flex:1;min-width:0;word-break:break-all}
+.id-table td.td-phone{font-family:"JetBrains Mono",monospace;font-size:11px}
+.id-copy-btn{background:var(--acc-soft);color:var(--accent);border:1px solid rgba(99,102,241,.2);border-radius:4px;padding:3px 8px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:"Noto Sans KR",sans-serif}
+.id-copy-btn:hover{background:rgba(99,102,241,.18)}
+.id-copy-btn.done{background:rgba(22,163,74,.12);color:#16a34a;border-color:rgba(22,163,74,.25)}
+.id-footer{padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text3);flex-shrink:0;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.id-loading{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+.id-empty{padding:40px;text-align:center;color:var(--text3);font-size:13px}
+.id-copy-all-btn{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:5px 12px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:"Noto Sans KR",sans-serif;margin-left:auto;transition:background .15s}
+.id-copy-all-btn:hover{background:var(--accent-dark)}
+.id-btn{background:rgba(249,115,22,.1);color:#f97316;border:1px solid rgba(249,115,22,.25);border-radius:5px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .15s;font-family:"Noto Sans KR",sans-serif}
+.id-btn:hover{background:rgba(249,115,22,.18)}
+#hist-modal{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px}
+.hist-box{background:var(--surface);border-radius:5px;width:100%;max-width:360px;box-shadow:0 8px 32px rgba(0,0,0,.18);overflow:hidden}
+.hist-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--theadbg);font-size:14px;font-weight:700;color:var(--text)}
+.hist-close{background:none;border:none;cursor:pointer;font-size:16px;color:var(--text2);padding:2px 6px;border-radius:5px}
+.hist-close:hover{background:var(--border)}
+.hist-body{padding:16px 20px 20px;max-height:60vh;overflow-y:auto}
+.hist-week-btn{display:block;width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:5px;padding:12px 16px;margin-bottom:8px;cursor:pointer;text-align:left;font-size:13px;font-weight:600;color:var(--text);transition:background .15s,border-color .15s;font-family:"Noto Sans KR",sans-serif}
+.hist-week-btn:hover{background:var(--acc-soft);border-color:var(--accent);color:var(--accent)}
+.hist-week-btn .hw-range{font-size:11px;color:var(--text3);font-weight:400;margin-top:2px}
+.hist-week-btn.hw-current{background:var(--acc-soft);border-color:var(--accent);color:var(--accent)}
+
+.action-btns{display:flex;flex-wrap:wrap;gap:7px}
+@media(max-width:768px){
+  .tbl-outer{display:none}
+  .mobile-list{display:block}
+  .week-label{display:none}
+  .action-btns{width:100%;justify-content:center;padding:4px 0}
+  .action-btns .hist-btn{margin-left:0}
+  .topbar-r2{justify-content:center}
+}
+@media(min-width:769px){
+  td.nc{text-align:center}
+  td.nc .sub{text-align:center}
+  td.rc{text-align:center}
+  .action-btns{margin-left:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-r1">
+    <button class="back-btn" onclick="location.href='index.html'">← 목록</button>
+    <div class="topbar-icon">📦</div>
+    <div class="topbar-center">
+      <h2 id="page-title">백업 스케줄</h2>
+    </div>
+    <div class="topbar-right">
+      <div class="search-box"><input type="text" id="cp-search" placeholder="이름/아이디"></div>
+      <span class="count-badge" id="cp-count">—</span>
+    </div>
+  </div>
+  <div class="topbar-r2">
+    <span class="today-lbl" id="cp-today">—</span>
+    <div class="tchip-wrap" id="cp-chips"></div>
+    <div class="action-btns"><button class="hist-btn" onclick="showHistoryModal()">📅 이전 스케줄</button><button class="id-btn" onclick="showIdModal()">📋 아이디복사</button><button class="id-btn" id="btn-loc" onclick="showLocModal()">📍 캠프 위치</button></div>
+  </div>
+</div>
+
+<div id="cp-notice" style="display:none" class="notice-bar"></div>
+<div id="hist-banner">
+  <span id="hist-banner-txt">—</span>
+  <button onclick="backToToday()">오늘 주로 돌아가기</button>
+</div>
+
+<div class="legend">
+  <div class="legend-item"><span class="chip cw" style="min-width:0;padding:1px 6px">출근</span> 출근</div>
+  <div class="legend-item"><span class="chip cg" style="min-width:0;padding:1px 6px">노선</span> 노선배정</div>
+  <div class="legend-item"><span class="chip co" style="min-width:0;padding:1px 6px">휴무</span> 휴무</div>
+  <div class="legend-item"><span class="chip cf" style="min-width:0;padding:1px 6px">고정</span> 고정휴무</div>
+  <div class="legend-item"><span class="chip cv" style="min-width:0;padding:1px 6px">휴가</span> 휴가</div>
+  <div class="legend-item"><span class="chip cs" style="min-width:0;padding:1px 6px">병가</span> 병가</div>
+  <div class="legend-item"><span class="chip cq" style="min-width:0;padding:1px 6px">퇴사</span> 퇴사</div>
+  <div class="legend-item"><span style="font-size:12px">🔥</span> 피크데이</div>
+ 
+</div>
+
+<div class="week-label">
+  <span class="wk-badge w1" id="wl1-badge">🟠 1주차</span>
+  <span class="wk-range" id="wl1-range">—</span>
+</div>
+<div class="tbl-outer">
+  <div class="tbl-scroll">
+    <table><thead id="cp-thead-w1"></thead><tbody id="cp-tbody-w1"></tbody></table>
+  </div>
+</div>
+
+<div class="week-label">
+  <span class="wk-badge w2" id="wl2-badge">🔵 2주차</span>
+  <span class="wk-range" id="wl2-range">—</span>
+</div>
+<div class="tbl-outer">
+  <div class="tbl-scroll">
+    <table><thead id="cp-thead-w2"></thead><tbody id="cp-tbody-w2"></tbody></table>
+  </div>
+</div>
+
+<div class="mobile-list" id="mobile-list"></div>
+
+
+<!-- 캠프 위치 모달 -->
+<div id="loc-modal" style="display:none" onclick="if(event.target===this)closeLocModal()">
+  <div class="loc-box">
+    <div class="loc-header">
+      <span>📍 <span id="loc-camp-title"></span> 위치</span>
+      <button class="hist-close" onclick="closeLocModal()">✕</button>
+    </div>
+    <div class="loc-body" id="loc-body"><div class="loc-loading">불러오는 중…</div></div>
+  </div>
+</div>
+
+<!-- 아이디복사 모달 -->
+<div id="id-modal" style="display:none" onclick="if(event.target===this)closeIdModal()">
+  <div class="id-box">
+    <div class="id-header">
+      <span>📋 기사 아이디 복사</span>
+      <button class="hist-close" onclick="closeIdModal()">✕</button>
+    </div>
+    <div class="id-toolbar">
+      <input class="id-search" id="id-search" type="text" placeholder="이름 / 아이디 검색…" oninput="renderIdTable()">
+      <select class="id-camp-sel" id="id-camp-sel" onchange="renderIdTable()"><option value="">전체 캠프</option></select>
+      <button class="id-copy-all-btn" onclick="copyAllIds()">📋 전체 복사</button>
+    </div>
+    <div class="id-body">
+      <div class="id-loading" id="id-loading">불러오는 중…</div>
+      <table class="id-table" id="id-table" style="display:none">
+        <tbody id="id-tbody"></tbody>
+      </table>
+      <div class="id-empty" id="id-empty" style="display:none">검색 결과가 없습니다</div>
+    </div>
+    <div class="id-footer">
+      <span id="id-count-lbl">—</span>
+      <span>각 항목 옆 복사 버튼을 눌러 복사하세요</span>
+    </div>
+  </div>
+</div>
+<!-- 이전 스케줄 모달 -->
+<div id="hist-modal" style="display:none" onclick="if(event.target===this)closeHistoryModal()">
+  <div class="hist-box">
+    <div class="hist-header">
+      <span>📅 이전 스케줄 조회</span>
+      <button class="hist-close" onclick="closeHistoryModal()">✕</button>
+    </div>
+    <div class="hist-body">
+      <p style="font-size:12px;color:var(--text3);margin-bottom:12px">조회할 주를 선택하세요</p>
+      <div id="hist-weeks"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var API_URL = "https://script.google.com/macros/s/AKfycbwbzBbSz-nx8W5rsR4yc20wCraUWI_g2uBNfsjzxqlmzMJWYnnGI50XNFkpApRQXKK1/exec";
+// ↑ 배포 후 실제 URL로 교체
+
+var KD = ["일","월","화","수","목","금","토"];
+var DRIVERS = [], TODAY = "", W1 = [], W2 = [], CAMP_NAME = "";
+
+// URL 파라미터에서 캠프명 추출
+var CAMP_NAME = "백업";
+document.title = "백업 스케줄";
+
+function toDS(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function addD(s,n){var d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return toDS(d);}
+function fmt(s){var d=new Date(s+"T00:00:00");return (d.getMonth()+1)+"/"+d.getDate();}
+function fmtFull(s){var d=new Date(s+"T00:00:00");return d.getFullYear()+"."+String(d.getMonth()+1).padStart(2,"0")+"."+String(d.getDate()).padStart(2,"0");}
+function isFire(ds){var n=parseInt(ds.split("-")[2],10);return n>=1&&n<=7;}
+
+function isWork(v){
+  if(!v||v==="")return false;
+  return !(v==="휴무"||v==="고정휴무"||v==="계획된 휴무"||v.indexOf("휴가")>-1||v.indexOf("병가")>-1||v.indexOf("퇴사")>-1||v.indexOf("용차")>-1);
+}
+
+function mkChip(v){
+  if(!v||v===""||v==="None")return '<span class="chip ce">—</span>';
+  if(v==="출근")return '<span class="chip cw">출근</span>';
+  if(v==="휴무"||v==="계획된 휴무")return '<span class="chip co">'+escH(v)+'</span>';
+  if(v==="고정휴무")return '<span class="chip cf">고정휴무</span>';
+  if(v.indexOf("휴가")>-1)return '<span class="chip cv">'+escH(v)+'</span>';
+  if(v.indexOf("병가")>-1)return '<span class="chip cs">'+escH(v)+'</span>';
+  if(v.indexOf("퇴사")>-1)return '<span class="chip cq">'+escH(v)+'</span>';
+  if(v.indexOf("미입차")>-1)return '<span class="chip co">'+escH(v)+'</span>';
+  // 노선명 등 기타 → 녹색
+  return '<span class="chip cg">'+escH(v)+'</span>';
+}
+function escH(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function getInitial(n){return n?n.charAt(0):"?";}
+
+/* ── 로딩 오버레이 ── */
+(function(){
+  var o=document.createElement("div");
+  o.id="lo";
+  o.style.cssText="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:9999;";
+  o.innerHTML='<div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div>'
+    +'<div style="text-align:center"><div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:6px">📦 '+"백업"+'</div>'
+    +'<div id="ls" style="font-size:13px;color:var(--text2)">스케줄 불러오는 중…</div>'
+    +'<div id="le" style="font-size:11px;color:var(--text3);margin-top:6px">0초</div>'
+    +'<div style="margin-top:12px;width:180px;height:4px;background:var(--border);border-radius:5px;overflow:hidden">'
+    +'<div id="lb" style="height:100%;width:0%;background:var(--accent);border-radius:5px;transition:width .5s ease"></div></div></div>';
+  document.body.appendChild(o);
+  var ss=document.createElement("style");ss.textContent="@keyframes spin{to{transform:rotate(360deg)}}";document.head.appendChild(ss);
+  var start=Date.now(),steps=[{t:0,m:"서버 연결 중…",p:5},{t:2,m:"데이터 읽는 중…",p:35},{t:5,m:"스케줄 처리 중…",p:65},{t:8,m:"거의 다 왔어요!",p:85},{t:12,m:"마지막 처리 중…",p:92}];
+  window._lt=setInterval(function(){
+    var sec=Math.round((Date.now()-start)/1000);
+    var le=document.getElementById("le"),ls=document.getElementById("ls"),lb=document.getElementById("lb");
+    if(!le){clearInterval(window._lt);return;}
+    le.textContent=sec+"초 경과";
+    var s=steps[0];for(var i=steps.length-1;i>=0;i--){if(sec>=steps[i].t){s=steps[i];break;}}
+    if(ls)ls.textContent=s.m;if(lb)lb.style.width=s.p+"%";
+  },1000);
+})();
+
+function hideOverlay(){
+  if(window._lt){clearInterval(window._lt);window._lt=null;}
+  var lb=document.getElementById("lb");if(lb)lb.style.width="100%";
+  var o=document.getElementById("lo");
+  if(o){o.style.transition="opacity .3s";o.style.opacity="0";setTimeout(function(){if(o.parentNode)o.remove();},300);}
+}
+function showError(msg){
+  var o=document.getElementById("lo");
+  if(o)o.innerHTML='<div style="font-size:36px">⚠️</div><div style="text-align:center;max-width:480px">'
+    +'<div style="font-size:16px;font-weight:700;color:var(--red)">데이터를 불러오지 못했습니다</div>'
+    +'<div style="font-size:12px;color:var(--text2);margin-top:8px;line-height:1.6">'+msg+'</div>'
+    +'<button onclick="location.reload()" style="margin-top:16px;background:var(--accent);color:#fff;border:none;border-radius:5px;padding:9px 22px;font-size:13px;cursor:pointer;font-family:Noto Sans KR,sans-serif;font-weight:600">다시 시도</button></div>';
+}
+
+/* ── 날짜 윈도우 ── */
+function buildWindow(){
+  var now=new Date();now.setDate(now.getDate()+1);TODAY=toDS(now);
+  var todD=new Date(TODAY+"T00:00:00"),dow=todD.getDay();
+  var sun=toDS(new Date(todD.getFullYear(),todD.getMonth(),todD.getDate()-dow));
+  W1=[];W2=[];
+  for(var i=0;i<14;i++){
+    var ds=addD(sun,i),dw=new Date(ds+"T00:00:00").getDay();
+    var obj={ds:ds,dow:dw,dn:KD[dw],isToday:ds===TODAY};
+    if(i<7)W1.push(obj);else W2.push(obj);
+  }
+}
+
+/* ── API 로드 ── */
+function loadData(){
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",API_URL+"?nocache=1&_t="+Date.now(),true);xhr.timeout=30000;
+  xhr.onload=function(){
+    if(xhr.status>=200&&xhr.status<300){
+      try{
+        var data=JSON.parse(xhr.responseText);
+        if(data.error)throw new Error(data.error);
+        // 해당 캠프 기사만 필터
+        var all=data.drivers||[];
+        if(CAMP_NAME){
+          DRIVERS=all.filter(function(d){return d.camp===CAMP_NAME&&d.name;});
+        } else {
+          DRIVERS=all.filter(function(d){return d.name;});
+        }
+        // index.html에서 숨긴 기사 제외
+        try{
+          var _hd=JSON.parse(localStorage.getItem("rl_hidden_drivers")||"{}");
+          DRIVERS=DRIVERS.filter(function(d){
+            var key=(d.camp||"")+"__"+(d.name||"");
+            return !_hd[key];
+          });
+        }catch(e){}
+        if(data.notice){var nb=document.getElementById("cp-notice");nb.style.display="block";nb.textContent=data.notice;}
+        buildWindow();
+        hideOverlay();
+        render(W1,W2);
+      }catch(e){showError("파싱 오류: "+e.message);}
+    } else {showError("서버 오류 HTTP "+xhr.status);}
+  };
+  xhr.onerror=function(){showError("네트워크 오류. 인터넷 연결을 확인해주세요.");};
+  xhr.ontimeout=function(){showError("요청 시간 초과. 다시 시도해주세요.");};
+  xhr.send();
+}
+loadData();
+
+/* ── 테이블 빌더 ── */
+var CN=120,CR=82,CD=90;
+function colg(n){
+  var c="<colgroup><col style='width:"+CN+"px'><col style='width:"+CR+"px'>";
+  for(var i=0;i<n;i++)c+="<col style='width:"+CD+"px'>";
+  return c+"</colgroup>";
+}
+function bHead(days,wc,label){
+  var h=colg(days.length)+"<tr><th colspan='"+(2+days.length)+"' class='"+wc+"' style='text-align:center'>"+label+"</th></tr><tr><th style='text-align:center'>이름</th><th style='text-align:center'>라우트</th>";
+  days.forEach(function(wd){
+    var cls=wd.isToday?"toh":wc,dc=wd.dow===0?"sun":wd.dow===6?"sat":"wdy";
+    var fire=isFire(wd.ds),dn=parseInt(wd.ds.split("-")[2],10);
+    h+="<th class='dcol "+(wd.isToday?"toh":"")+(fire?" fire-col":"")+"'><span class='dnum-wrap'>"+(fire?"<span class='dfire-left'>🔥</span>":"")+"<span class='dnum'>"+dn+"</span></span><span class='dday "+dc+"'>"+wd.dn+"</span>"+(wd.isToday?"<span class='dtd'>PDD</span>":"")+"</th>";
+  });
+  return h+"</tr>";
+}
+function bRows(days,wc){
+  var h=colg(days.length);
+  if(!DRIVERS.length)return "<tr><td colspan='"+(2+days.length)+"' style='text-align:center;padding:40px;color:var(--text3);font-size:13px'>등록된 기사가 없습니다</td></tr>";
+  DRIVERS.forEach(function(d){
+    h+="<tr data-n='"+String(d.name||"").toLowerCase()+"' data-i='"+String(d.id||"").toLowerCase()+"'>";
+    h+="<td class='nc'>"+escH(d.name||"")+"<div class='sub'>"+escH(d.id||"")+"</div></td>";
+    h+="<td class='rc'>"+escH(d.route||"")+"</td>";
+    days.forEach(function(wd){
+      var tc="sc "+(wd.isToday?"tod":wc==="w1h"?"w1":"w2");
+      var v=(d.schedule&&d.schedule[wd.ds])||"";
+      h+="<td class='"+tc+"'>"+mkChip(v)+"</td>";
+    });
+    h+="</tr>";
+  });
+  return h;
+}
+function bMobile(w1,w2){
+  var html="";
+  DRIVERS.forEach(function(d){
+    var tv=(d.schedule&&d.schedule[TODAY])||"";
+    function dg(days){
+      var g="<div class='day-grid'>";
+      days.forEach(function(wd){
+        var v=(d.schedule&&d.schedule[wd.ds])||"";
+        var dc=wd.dow===0?"sun":wd.dow===6?"sat":"wdy";
+        var fire=isFire(wd.ds),dn=parseInt(wd.ds.split("-")[2],10);
+        g+="<div class='day-cell"+(wd.isToday?" today-cell":"")+"'>"
+          +"<span class='dc-dnum-wrap'>"+(fire?"<span class='dc-fire-left'>🔥</span>":"")+"<span class='dc-dnum "+dc+"'>"+dn+"</span></span>"
+          +"<span class='dc-dday "+dc+"'>"+wd.dn+"</span>"+(wd.isToday?"<span class='dc-today-badge'>PDD</span>":"")
+          +"<span class='dc-chip'>"+mkChip(v)+"</span></div>";
+      });
+      return g+"</div>";
+    }
+    html+="<div class='driver-card' data-n='"+String(d.name||"").toLowerCase()+"' data-i='"+String(d.id||"").toLowerCase()+"'>"
+      +"<div class='dc-head'><div class='dc-avatar'>"+escH(getInitial(d.name||""))+"</div>"
+      +"<div class='dc-info'><div class='dc-name'>"+escH(d.name||"")+"</div><div class='dc-sub'>"+escH(d.id||"")+"</div></div>"
+      +"<div class='dc-route'>"+escH(d.route||"")+"</div><div class='dc-today'>"+mkChip(tv)+"</div><span class='dc-chevron'>▾</span></div>"
+      +"<div class='dc-body'>"
+      +"<div class='week-grid-label wgl-w1'>🟠 1주차 "+fmt(w1[0].ds)+"~"+fmt(w1[6].ds)+" &nbsp;<span style='font-size:9px;opacity:.8'>스케줄 변경 불가</span></div>"+dg(w1)
+      +(w2.length?"<div class='week-grid-label wgl-w2'>🔵 2주차 "+fmt(w2[0].ds)+"~"+fmt(w2[w2.length-1].ds)+" &nbsp;<span style='font-size:9px;color:#dc2626'>※ 스케줄 변경될 수 있음</span></div>"+dg(w2):"")
+      +"</div></div>";
+  });
+  return html;
+}
+
+function render(w1,w2){
+  var wc=DRIVERS.filter(function(d){return isWork((d.schedule&&d.schedule[TODAY])||"");}).length;
+  var oc=DRIVERS.length-wc;
+  var dow=KD[new Date(TODAY+"T00:00:00").getDay()];
+  document.getElementById("cp-today").textContent="PDD "+TODAY+" ("+dow+")";
+  document.getElementById("cp-chips").innerHTML='<span class="tchip wk">출근 '+wc+'명</span><span class="tchip of">휴무 '+oc+'명</span>';
+  document.getElementById("cp-count").textContent=DRIVERS.length+"명";
+  document.getElementById("wl1-range").textContent=fmt(w1[0].ds)+" ~ "+fmt(w1[6].ds);
+  document.getElementById("wl2-range").textContent=w2.length?fmt(w2[0].ds)+" ~ "+fmt(w2[w2.length-1].ds):"";
+  document.getElementById("cp-thead-w1").innerHTML=bHead(w1,"w1h","🟠 1주차 &nbsp;<span style='font-size:10px;font-weight:500;opacity:.85'>스케줄 변경 불가</span>");
+  document.getElementById("cp-tbody-w1").innerHTML=bRows(w1,"w1h");
+  document.getElementById("cp-thead-w2").innerHTML=bHead(w2,"w2h","🔵 2주차 &nbsp;<span style='font-size:10px;font-weight:500;color:#dc2626'>※ 스케줄 변경될 수 있음</span>");
+  document.getElementById("cp-tbody-w2").innerHTML=bRows(w2,"w2h");
+  document.getElementById("mobile-list").innerHTML=bMobile(w1,w2);
+  document.querySelectorAll(".dc-head").forEach(function(h){h.onclick=function(){h.parentElement.classList.toggle("collapsed");};});
+  fixH();
+}
+function fixH(){
+  var tb=document.querySelector(".topbar");if(!tb)return;
+  var tbH=tb.offsetHeight;
+  var lg=document.querySelector(".legend"),lgH=lg?lg.getBoundingClientRect().height+16:0;
+  var wl=document.querySelector(".week-label"),wlH=wl?wl.getBoundingClientRect().height+14:0;
+  var maxH=Math.max(200,Math.floor(window.innerHeight-tbH-lgH-wlH-24));
+  document.querySelectorAll(".tbl-scroll").forEach(function(el){el.style.maxHeight=maxH+"px";});
+}
+window.addEventListener("resize",fixH);
+
+document.getElementById("cp-search").addEventListener("input",function(){
+  var q=this.value.toLowerCase().trim();
+  document.querySelectorAll("#cp-tbody-w1 tr[data-n],#cp-tbody-w2 tr[data-n]").forEach(function(tr){
+    tr.classList.toggle("hid",!(!q||tr.dataset.n.indexOf(q)>-1||tr.dataset.i.indexOf(q)>-1));
+  });
+  document.querySelectorAll(".driver-card[data-n]").forEach(function(c){
+    c.classList.toggle("hid",!(!q||c.dataset.n.indexOf(q)>-1||c.dataset.i.indexOf(q)>-1));
+  });
+  var cnt=document.querySelectorAll("#cp-tbody-w1 tr[data-n]:not(.hid)").length;
+  document.getElementById("cp-count").textContent=cnt+"명";
+});
+
+/* ── 이전 스케줄 ── */
+function showHistoryModal(){
+  var pdd=new Date(TODAY+"T00:00:00"),ts=new Date(pdd);ts.setDate(pdd.getDate()-pdd.getDay());
+  var c=document.getElementById("hist-weeks");c.innerHTML="";
+  for(var w=0;w<=3;w++){
+    var sun=new Date(ts);sun.setDate(ts.getDate()-w*7);
+    var sd=toDS(sun);
+    (function(sunDs,isCur){
+      var btn=document.createElement("button");
+      btn.className="hist-week-btn"+(isCur?" hw-current":"");
+      btn.innerHTML="<div>"+(isCur?"📌 이번 주 (현재)":(w+"주 전"))+"</div><div class='hw-range'>"+fmtFull(sunDs)+" ~ "+fmtFull(addD(sunDs,6))+"</div>";
+      btn.onclick=function(){closeHistoryModal();if(isCur)backToToday();else loadHist(sunDs);};
+      c.appendChild(btn);
+    })(sd,w===0);
+  }
+  document.getElementById("hist-modal").style.display="flex";
+}
+function closeHistoryModal(){document.getElementById("hist-modal").style.display="none";}
+/* ════════════════════════════════════════
+   아이디복사 모달
+   ════════════════════════════════════════ */
+var ID_DRIVERS = null;  // cache
+
+function showIdModal() {
+  document.getElementById('id-modal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  if (ID_DRIVERS === null) {
+    loadIdDrivers();
+  } else {
+    renderIdTable();
+  }
+}
+function closeIdModal() {
+  document.getElementById('id-modal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function loadIdDrivers() {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', API_URL + '?action=getDriverIds&_t=' + Date.now(), true);
+  xhr.timeout = 15000;
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState !== 4) return;
+    try {
+      var data = JSON.parse(xhr.responseText);
+      if (data.ok && data.drivers) {
+        ID_DRIVERS = data.drivers.filter(function(d){ return d.name; });
+        buildCampFilter();
+        renderIdTable();
+      } else {
+        document.getElementById('id-loading').textContent = '데이터를 불러올 수 없습니다';
+      }
+    } catch(e) {
+      document.getElementById('id-loading').textContent = '오류: ' + e.message;
+    }
+  };
+  xhr.send();
+}
+
+function buildCampFilter() {
+  var sel = document.getElementById('id-camp-sel');
+  var camps = [];
+  ID_DRIVERS.forEach(function(d) {
+    if (d.camp && camps.indexOf(d.camp) < 0) camps.push(d.camp);
+  });
+  camps.sort();
+  camps.forEach(function(c) {
+    var o = document.createElement('option');
+    o.value = c; o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+function renderIdTable() {
+  if (!ID_DRIVERS) return;
+  var q = (document.getElementById('id-search').value || '').trim().toLowerCase();
+  var camp = document.getElementById('id-camp-sel').value;
+  var filtered = ID_DRIVERS.filter(function(d) {
+    if (camp && d.camp !== camp) return false;
+    if (q) {
+      var name = (d.name || '').toLowerCase();
+      var id   = (d.id   || '').toLowerCase();
+      var ph   = (d.phone|| '').toLowerCase();
+      if (name.indexOf(q) < 0 && id.indexOf(q) < 0 && ph.indexOf(q) < 0) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('id-loading').style.display = 'none';
+  var tbody = document.getElementById('id-tbody');
+  tbody.innerHTML = '';
+
+  if (filtered.length === 0) {
+    document.getElementById('id-table').style.display = 'none';
+    document.getElementById('id-empty').style.display = 'block';
+    document.getElementById('id-count-lbl').textContent = '0명';
+    return;
+  }
+  document.getElementById('id-empty').style.display = 'none';
+  document.getElementById('id-table').style.display = 'table';
+  document.getElementById('id-count-lbl').textContent = filtered.length + '명';
+
+  filtered.forEach(function(d, idx) {
+    var tr = document.createElement('tr');
+    tr.id = 'id-row-' + idx;
+    var idBtn = '<button class="id-copy-btn" data-type="id" data-idx="' + idx + '">복사</button>';
+    var phBtn = '<button class="id-copy-btn" data-type="ph" data-idx="' + idx + '">복사</button>';
+    tr.innerHTML =
+      '<td class="td-camp">' + escH(d.camp||'') + '</td>' +
+      '<td class="td-name">' + escH(d.name||'') + '</td>' +
+      '<td class="td-id"><div class="id-cell"><span>' + escH(d.id||'') + '</span>' + idBtn + '</div></td>' +
+      '<td class="td-phone"><div class="id-cell"><span>' + escH(d.phone||'') + '</span>' + phBtn + '</div></td>';
+    tbody.appendChild(tr);
+  });
+
+  // 버튼 이벤트 일괄 등록
+  tbody.querySelectorAll('.id-copy-btn').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var i    = parseInt(btn.getAttribute('data-idx'), 10);
+      var type = btn.getAttribute('data-type');
+      var driver = filtered[i];
+      var text = type === 'id' ? (driver.id || '') : (driver.phone || '');
+      copyText(text, 'id-row-' + i, btn);
+    });
+  });
+}
+
+function copyText(text, rowId, btn) {
+  if (!text) return;
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  // 행 하이라이트
+  if (rowId) {
+    var row = document.getElementById(rowId);
+    if (row) {
+      row.classList.add('copied-row');
+      setTimeout(function(){ row.classList.remove('copied-row'); }, 1200);
+    }
+  }
+  // 버튼 피드백
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ 복사됨';
+    btn.classList.add('done');
+    setTimeout(function(){ btn.textContent = orig; btn.classList.remove('done'); }, 1200);
+  }
+}
+
+function copyAllIds() {
+  if (!ID_DRIVERS) return;
+  var q = (document.getElementById('id-search').value || '').trim().toLowerCase();
+  var camp = document.getElementById('id-camp-sel').value;
+  var filtered = ID_DRIVERS.filter(function(d) {
+    if (camp && d.camp !== camp) return false;
+    if (q) {
+      var name = (d.name||'').toLowerCase();
+      var id   = (d.id  ||'').toLowerCase();
+      if (name.indexOf(q)<0 && id.indexOf(q)<0) return false;
+    }
+    return true;
+  });
+  var text = filtered.map(function(d){
+    return [d.camp||'', d.name||'', d.id||'', d.phone||''].join('\t');
+  }).join('\n');
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);
+  ta.select();
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  var btn = document.querySelector('.id-copy-all-btn');
+  if (btn) {
+    var orig = btn.textContent;
+    btn.textContent = '✓ ' + filtered.length + '명 복사됨!';
+    setTimeout(function(){ btn.textContent = orig; }, 1800);
+  }
+}
+function loadHist(sunDs){
+  var hw=[];
+  for(var i=0;i<7;i++){var ds=addD(sunDs,i),dw=new Date(ds+"T00:00:00").getDay();hw.push({ds:ds,dow:dw,dn:KD[dw],isToday:ds===TODAY});}
+  document.getElementById("wl2-badge").style.display="none";
+  document.getElementById("wl2-range").textContent="";
+  document.getElementById("cp-thead-w2").innerHTML="";document.getElementById("cp-tbody-w2").innerHTML="";
+  document.getElementById("cp-thead-w1").innerHTML=bHead(hw,"w1h","📅 "+fmtFull(sunDs)+" ~ "+fmtFull(addD(sunDs,6)));
+  document.getElementById("cp-tbody-w1").innerHTML=bRows(hw,"w1h");
+  document.getElementById("mobile-list").innerHTML=bMobile(hw,[]);
+  document.getElementById("wl1-range").textContent=fmtFull(sunDs)+" ~ "+fmtFull(addD(sunDs,6));
+  document.getElementById("wl1-badge").style.display="";
+  var banner=document.getElementById("hist-banner");banner.style.display="block";
+  document.getElementById("hist-banner-txt").textContent="📅 이전 스케줄: "+fmtFull(sunDs)+" ~ "+fmtFull(addD(sunDs,6));
+  document.querySelectorAll(".dc-head").forEach(function(h){h.onclick=function(){h.parentElement.classList.toggle("collapsed");};});
+  window.scrollTo(0,0);
+}
+function backToToday(){
+  document.getElementById("hist-banner").style.display="none";
+  var b2=document.getElementById("wl2-badge");if(b2)b2.style.display="";
+  render(W1,W2);
+}
+
+/* ── 캠프 위치 팝업 ── */
+function showLocModal(){
+  var btn=document.getElementById("btn-loc");if(btn)btn.classList.add("loading");
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",API_URL+"?action=getCampLocations&_t="+Date.now(),true);xhr.timeout=15000;
+  xhr.onload=function(){
+    if(btn)btn.classList.remove("loading");
+    try{
+      var res=JSON.parse(xhr.responseText);
+      var locs=res.locations||{};
+      var entries=locs[CAMP_NAME]||[];
+      openLocPopup_(CAMP_NAME,entries,false);
+    }catch(e){alert("오류: "+e.message);}
+  };
+  xhr.onerror=xhr.ontimeout=function(){
+    if(btn)btn.classList.remove("loading");
+    alert("네트워크 오류. 다시 시도해주세요.");
+  };
+  xhr.send();
+}
+function openLocPopup_(campName,entries,showCamp){
+  var popup=window.open('','_blank','width=440,height=520,scrollbars=yes,resizable=yes');
+  if(!popup){alert("팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.");return;}
+  var doc=popup.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+campName+' 위치</title>');
+  doc.write('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">');
+  doc.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;background:#f4f5fb;padding:16px}.header{background:#6366f1;color:#fff;padding:14px 18px;border-radius:5px;margin-bottom:14px;font-size:15px;font-weight:700}.card{background:#fff;border:1px solid #e0e3f0;border-radius:5px;padding:12px 14px;margin-bottom:8px;cursor:pointer}.card:hover{border-color:#6366f1}.camp-tag{font-size:9px;background:rgba(99,102,241,.12);color:#6366f1;border-radius:3px;padding:1px 5px;margin-bottom:3px;display:inline-block}.gubun{font-size:10px;color:#9ca3af;margin-bottom:3px}.addr{font-size:13px;color:#6366f1;font-weight:600}.hint{font-size:11px;color:#9ca3af;margin-top:3px}.empty{text-align:center;padding:40px;color:#9ca3af}</style>');
+  doc.write('</head><body><div class="header">📍 '+campName+' 위치</div>');
+  if(!entries||!entries.length){doc.write('<div class="empty">📭 위치 정보가 없습니다.</div>');}
+  else{entries.forEach(function(e){var addr=e.address||"",gubun=e.gubun||"",camp=e.camp||"";doc.write('<div class="card">');if(showCamp)doc.write('<div class="camp-tag">'+camp+'</div>');doc.write('<div class="gubun">'+gubun+'</div><div class="addr">'+addr+'</div><div class="hint">📍 클릭하면 티맵으로 열립니다</div></div>');});}
+  doc.write('<scr'+'ipt>var addrs='+JSON.stringify(entries.map(function(e){return e.address||""}))+';document.querySelectorAll(".card").forEach(function(c,i){c.onclick=function(){var a=addrs[i];var m=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(m){location.href="tmap://search?name="+encodeURIComponent(a);}else{window.open("https://www.tmap.co.kr/tmap2/common/search.do?searchText="+encodeURIComponent(a),"_blank");}};});</'+'script>');
+  doc.write('</body></html>');
+  doc.close();
+}
+function closeLocModal(){var m=document.getElementById("loc-modal");if(m)m.style.display="none";}
+
+</script>
+</body>
+</html>
