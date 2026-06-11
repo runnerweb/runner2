@@ -185,6 +185,7 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
   <div class="legend-item"><span class="chip cq" style="min-width:0;padding:1px 6px">퇴사</span> 퇴사</div>
   <div class="legend-item"><span style="font-size:12px">🔥</span> 피크데이</div>
   <button class="loc-btn" id="btn-loc" onclick="showLocModal()">📍 캠프 위치 보기</button>
+  <button class="loc-btn ids-btn" id="btn-ids" onclick="showIdsPopup()">📋 아이디 복사하기</button>
 </div>
 
 <div class="week-label">
@@ -235,7 +236,7 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
 </div>
 
 <script>
-var API_URL = "https://script.google.com/macros/s/AKfycbxrlj5k4901wkZr5KBymFA3SeK_9vF8pkltmWvzRaOzeG-hxPGu4VtEsPQ7GQs1vnr4/exec";
+var API_URL = "https://script.google.com/macros/s/AKfycbwbzBbSz-nx8W5rsR4yc20wCraUWI_g2uBNfsjzxqlmzMJWYnnGI50XNFkpApRQXKK1/exec";
 // ↑ 배포 후 실제 URL로 교체
 
 var KD = ["일","월","화","수","목","금","토"];
@@ -502,8 +503,8 @@ function showLocModal(){
       var res=JSON.parse(xhr.responseText);
       var locs=res.locations||{};
       var entries=locs[CAMP_NAME]||[];
-      openLocPopup_(CAMP_NAME, entries);
-    }catch(e){ alert("오류: "+e.message); }
+      openLocPopup_(CAMP_NAME,entries,false);
+    }catch(e){alert("오류: "+e.message);}
   };
   xhr.onerror=xhr.ontimeout=function(){
     if(btn)btn.classList.remove("loading");
@@ -511,52 +512,72 @@ function showLocModal(){
   };
   xhr.send();
 }
-function openLocPopup_(campName, entries){
+function openLocPopup_(campName,entries,showCamp){
   var popup=window.open('','_blank','width=440,height=520,scrollbars=yes,resizable=yes');
-  if(!popup){ alert("팝업이 차단됐습니다. 브라우저에서 팝업 허용 후 다시 시도해주세요."); return; }
+  if(!popup){alert("팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.");return;}
   var doc=popup.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8">');
-  doc.write('<meta name="viewport" content="width=device-width,initial-scale=1.0">');
-  doc.write('<title>'+campName+' 위치</title>');
+  doc.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+campName+' 위치</title>');
   doc.write('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">');
-  doc.write('<style>*{box-sizing:border-box;margin:0;padding:0}');
-  doc.write('body{font-family:"Noto Sans KR",sans-serif;background:#f4f5fb;padding:20px}');
-  doc.write('.header{background:#6366f1;color:#fff;padding:16px 20px;border-radius:5px;margin-bottom:16px;font-size:16px;font-weight:700}');
-  doc.write('.card{background:#fff;border:1px solid #e0e3f0;border-radius:5px;padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:box-shadow .15s}');
-  doc.write('.card:hover{box-shadow:0 4px 12px rgba(99,102,241,.15);border-color:#6366f1}');
-  doc.write('.gubun{font-size:10px;color:#9ca3af;margin-bottom:4px}');
-  doc.write('.addr{font-size:14px;color:#6366f1;font-weight:600;text-decoration:underline;text-underline-offset:2px}');
-  doc.write('.hint{font-size:11px;color:#9ca3af;margin-top:4px}');
-  doc.write('.empty{text-align:center;padding:40px;color:#9ca3af;font-size:14px}</style>');
-  doc.write('</head><body>');
-  doc.write('<div class="header">📍 '+campName+' 위치</div>');
-  if(!entries||!entries.length){
-    doc.write('<div class="empty">📭 위치 정보가 없습니다.</div>');
-  } else {
-    entries.forEach(function(e){
-      var addr=e.address||"", gubun=e.gubun||"";
-      doc.write('<div class="card">');
-      doc.write('<div class="gubun">'+gubun+'</div>');
-      doc.write('<div class="addr">'+addr+'</div>');
-      doc.write('<div class="hint">📍 클릭하면 티맵으로 열립니다</div>');
-      doc.write('</div>');
-    });
-  }
-  doc.write('<script>');
-  doc.write('document.querySelectorAll(".card").forEach(function(card,i){');
-  doc.write('var addrs='+JSON.stringify(entries.map(function(e){return e.address||""}))+';');
-  doc.write('card.onclick=function(){');
-  doc.write('var addr=addrs[i];');
-  doc.write('var m=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);');
-  doc.write('if(m){location.href="tmap://search?name="+encodeURIComponent(addr);}');
-  doc.write('else{window.open("https://www.tmap.co.kr/tmap2/common/search.do?searchText="+encodeURIComponent(addr),"_blank");}');
-  doc.write('};});');
-  doc.write('<\/script>');
+  doc.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;background:#f4f5fb;padding:16px}.header{background:#6366f1;color:#fff;padding:14px 18px;border-radius:5px;margin-bottom:14px;font-size:15px;font-weight:700}.card{background:#fff;border:1px solid #e0e3f0;border-radius:5px;padding:12px 14px;margin-bottom:8px;cursor:pointer}.card:hover{border-color:#6366f1}.camp-tag{font-size:9px;background:rgba(99,102,241,.12);color:#6366f1;border-radius:3px;padding:1px 5px;margin-bottom:3px;display:inline-block}.gubun{font-size:10px;color:#9ca3af;margin-bottom:3px}.addr{font-size:13px;color:#6366f1;font-weight:600}.hint{font-size:11px;color:#9ca3af;margin-top:3px}.empty{text-align:center;padding:40px;color:#9ca3af}</style>');
+  doc.write('</head><body><div class="header">📍 '+campName+' 위치</div>');
+  if(!entries||!entries.length){doc.write('<div class="empty">📭 위치 정보가 없습니다.</div>');}
+  else{entries.forEach(function(e){var addr=e.address||"",gubun=e.gubun||"",camp=e.camp||"";doc.write('<div class="card">');if(showCamp)doc.write('<div class="camp-tag">'+camp+'</div>');doc.write('<div class="gubun">'+gubun+'</div><div class="addr">'+addr+'</div><div class="hint">📍 클릭하면 티맵으로 열립니다</div></div>');});}
+  doc.write('<scr'+'ipt>var addrs='+JSON.stringify(entries.map(function(e){return e.address||""}))+';document.querySelectorAll(".card").forEach(function(c,i){c.onclick=function(){var a=addrs[i];var m=/Android|iPhone|iPad|iPod/i.test(navigator.userAgent);if(m){location.href="tmap://search?name="+encodeURIComponent(a);}else{window.open("https://www.tmap.co.kr/tmap2/common/search.do?searchText="+encodeURIComponent(a),"_blank");}};});</'+'script>');
   doc.write('</body></html>');
   doc.close();
 }
-function closeLocModal(){ var m=document.getElementById("loc-modal"); if(m)m.style.display="none"; }
+function closeLocModal(){var m=document.getElementById("loc-modal");if(m)m.style.display="none";}
+
+/* ── 아이디 복사 팝업 ── */
+function showIdsPopup(){
+  var btn=document.getElementById("btn-ids");if(btn)btn.classList.add("loading");
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",API_URL+"?action=getDriverIds&_t="+Date.now(),true);xhr.timeout=15000;
+  xhr.onload=function(){
+    if(btn)btn.classList.remove("loading");
+    try{
+      var res=JSON.parse(xhr.responseText);
+      var all=res.drivers||[];
+      var drivers=CAMP_NAME==="백업"||CAMP_NAME==="운영자"
+        ?all.filter(function(d){return d.name&&d.name!=="이름"&&d.camp!=="캠프";})
+        :all.filter(function(d){return d.camp===CAMP_NAME&&d.name&&d.name!=="이름";});
+      var title=CAMP_NAME==="백업"||CAMP_NAME==="운영자"?"전체 캠프":CAMP_NAME;
+      var showCamp=CAMP_NAME==="백업"||CAMP_NAME==="운영자";
+      openIdsPopup_(title,drivers,showCamp);
+    }catch(e){alert("오류: "+e.message);}
+  };
+  xhr.onerror=xhr.ontimeout=function(){
+    if(btn)btn.classList.remove("loading");
+    alert("네트워크 오류. 다시 시도해주세요.");
+  };
+  xhr.send();
+}
+function openIdsPopup_(campName,drivers,showCamp){
+  var popup=window.open('','_blank','width=480,height=600,scrollbars=yes,resizable=yes');
+  if(!popup){alert("팝업이 차단됐습니다. 팝업 허용 후 다시 시도해주세요.");return;}
+  var doc=popup.document;
+  doc.open();
+  doc.write('<!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>'+campName+' 아이디</title>');
+  doc.write('<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">');
+  doc.write('<style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:"Noto Sans KR",sans-serif;background:#f4f5fb;padding:16px}.header{background:#6366f1;color:#fff;padding:14px 18px;border-radius:5px;margin-bottom:14px;font-size:15px;font-weight:700;display:flex;align-items:center;justify-content:space-between}.copy-all{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:4px;padding:4px 10px;font-size:11px;cursor:pointer;font-weight:600}.card{background:#fff;border:1px solid #e0e3f0;border-radius:5px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:8px}.camp-tag{font-size:9px;background:rgba(99,102,241,.12);color:#6366f1;border-radius:3px;padding:1px 5px;white-space:nowrap}.name{font-size:13px;font-weight:700;color:#1e1b4b;min-width:55px}.id{font-size:12px;font-family:"JetBrains Mono",monospace;color:#6366f1;font-weight:600;flex:1}.phone{font-size:11px;color:#9ca3af;font-family:"JetBrains Mono",monospace;min-width:95px;text-align:right}.btn-copy{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.25);color:#6366f1;border-radius:4px;padding:4px 8px;font-size:10px;cursor:pointer;font-weight:600;white-space:nowrap}.btn-phone{background:rgba(22,163,74,.1);border-color:rgba(22,163,74,.25);color:#16a34a}.btn-copy:hover{opacity:.75}.btn-copy.copied{background:#16a34a;border-color:#16a34a;color:#fff}.empty{text-align:center;padding:40px;color:#9ca3af}.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:#1e1b4b;color:#fff;padding:8px 18px;border-radius:5px;font-size:12px;display:none;z-index:999}</style>');
+  doc.write('</head><body><div class="header"><span>📋 '+campName+' 아이디 목록</span><button class="copy-all" id="cabtn">전체 복사</button></div>');
+  if(!drivers||!drivers.length){doc.write('<div class="empty">📭 데이터가 없습니다.</div>');}
+  else{drivers.forEach(function(d){doc.write('<div class="card">');if(showCamp)doc.write('<span class="camp-tag">'+d.camp+'</span>');doc.write('<div class="name">'+d.name+'</div><div class="id">'+d.id+'</div><div class="phone">'+d.phone+'</div><button class="btn-copy btn-id">ID</button><button class="btn-copy btn-phone">📞</button></div>');});}
+  doc.write('<div class="toast" id="toast"></div>');
+  var ids=drivers.map(function(d){return d.id;});
+  doc.write('<scr'+'ipt>');
+  doc.write('function toast(m){var t=document.getElementById("toast");t.textContent=m;t.style.display="block";setTimeout(function(){t.style.display="none";},1500);}');
+  doc.write('function cp(text,cb){navigator.clipboard?navigator.clipboard.writeText(text).then(cb).catch(function(){var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");document.body.removeChild(t);cb();}):(function(){var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");document.body.removeChild(t);cb();})();}');
+  doc.write('var ids='+JSON.stringify(ids)+';');
+  doc.write('var ids='+JSON.stringify(ids)+';var phones='+JSON.stringify(phones)+';');
+  doc.write('document.querySelectorAll(".btn-id").forEach(function(btn,i){btn.onclick=function(){cp(ids[i],function(){btn.textContent="✓";btn.classList.add("copied");setTimeout(function(){btn.textContent="ID";btn.classList.remove("copied");},1200);toast("아이디 복사: "+ids[i]);});};});');
+  doc.write('document.querySelectorAll(".btn-phone").forEach(function(btn,i){btn.onclick=function(){cp(phones[i],function(){btn.textContent="✓";btn.classList.add("copied");setTimeout(function(){btn.textContent="📞";btn.classList.remove("copied");},1200);toast("전화번호 복사: "+phones[i]);});};});');
+  doc.write('document.getElementById("cabtn").onclick=function(){cp(ids.join("\n"),function(){toast("전체 아이디 "+ids.length+"개 복사됨");});};');
+  doc.write('</'+'script>');
+  doc.write('</body></html>');
+  doc.close();
+}
 </script>
 </body>
 </html>
