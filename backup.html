@@ -231,7 +231,7 @@ var DRIVERS = [], TODAY = "", W1 = [], W2 = [], CAMP_NAME = "";
 
 // URL 파라미터에서 캠프명 추출
 var CAMP_NAME = "백업";
-document.title = "강서1캠프 스케줄";
+document.title = "백업 스케줄";
 
 function toDS(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
 function addD(s,n){var d=new Date(s+"T00:00:00");d.setDate(d.getDate()+n);return toDS(d);}
@@ -265,7 +265,7 @@ function getInitial(n){return n?n.charAt(0):"?";}
   o.id="lo";
   o.style.cssText="position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;z-index:9999;";
   o.innerHTML='<div style="width:44px;height:44px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite"></div>'
-    +'<div style="text-align:center"><div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:6px">📦 '+"강서1캠프"+'</div>'
+    +'<div style="text-align:center"><div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:6px">📦 백업</div>'
     +'<div id="ls" style="font-size:13px;color:var(--text2)">스케줄 불러오는 중…</div>'
     +'<div id="le" style="font-size:11px;color:var(--text3);margin-top:6px">0초</div>'
     +'<div style="margin-top:12px;width:180px;height:4px;background:var(--border);border-radius:5px;overflow:hidden">'
