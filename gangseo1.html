@@ -184,6 +184,7 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
   <div class="legend-item"><span class="chip cs" style="min-width:0;padding:1px 6px">병가</span> 병가</div>
   <div class="legend-item"><span class="chip cq" style="min-width:0;padding:1px 6px">퇴사</span> 퇴사</div>
   <div class="legend-item"><span style="font-size:12px">🔥</span> 피크데이</div>
+  <button class="loc-btn" id="btn-loc" onclick="showLocModal()">📍 캠프 위치 보기</button>
 </div>
 
 <div class="week-label">
@@ -208,6 +209,17 @@ td.sc.tod{background:var(--todbg);border-left:1px solid var(--todbd);border-righ
 
 <div class="mobile-list" id="mobile-list"></div>
 
+
+<!-- 캠프 위치 모달 -->
+<div id="loc-modal" style="display:none" onclick="if(event.target===this)closeLocModal()">
+  <div class="loc-box">
+    <div class="loc-header">
+      <span>📍 <span id="loc-camp-title"></span> 위치</span>
+      <button class="hist-close" onclick="closeLocModal()">✕</button>
+    </div>
+    <div class="loc-body" id="loc-body"><div class="loc-loading">불러오는 중…</div></div>
+  </div>
+</div>
 <!-- 이전 스케줄 모달 -->
 <div id="hist-modal" style="display:none" onclick="if(event.target===this)closeHistoryModal()">
   <div class="hist-box">
