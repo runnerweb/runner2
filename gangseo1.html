@@ -310,47 +310,31 @@ function buildWindow(){
   }
 }
 
-/* ── API 로드 - GitHub JSON 우선, Apps Script 백그라운드 ── */
-var GITHUB_JSON = "https://raw.githubusercontent.com/runnerweb/runner2/main/data/schedule.json";
-var _rendered = false;
-
-function processData_(data){
-  if(data.error) throw new Error(data.error);
-  var all=data.drivers||[];
-  DRIVERS=all.filter(function(d){return d.camp===CAMP_NAME&&d.name;});
-  if(data.notice){var nb=document.getElementById("cp-notice");nb.style.display="block";nb.textContent=data.notice;}
-}
-
+/* ── API 로드 ── */
 function loadData(){
-  // 1) GitHub JSON 우선 로드 (빠름 ~0.5초)
-  var xhrG=new XMLHttpRequest();
-  xhrG.open("GET",GITHUB_JSON+"?_t="+Date.now(),true);xhrG.timeout=8000;
-  xhrG.onload=function(){
-    if(xhrG.status>=200&&xhrG.status<300){
-      try{
-        processData_(JSON.parse(xhrG.responseText));
-        buildWindow();hideOverlay();render(W1,W2);_rendered=true;
-      }catch(e){}
-    }
-  };
-  xhrG.send();
-
-  // 2) Apps Script 백그라운드 로드 (최신 데이터 확인)
   var xhr=new XMLHttpRequest();
   xhr.open("GET",API_URL+"?nocache=1&_t="+Date.now(),true);xhr.timeout=30000;
   xhr.onload=function(){
     if(xhr.status>=200&&xhr.status<300){
       try{
-        var prev=JSON.stringify(DRIVERS);
-        processData_(JSON.parse(xhr.responseText));
+        var data=JSON.parse(xhr.responseText);
+        if(data.error)throw new Error(data.error);
+        // 해당 캠프 기사만 필터
+        var all=data.drivers||[];
+        if(CAMP_NAME){
+          DRIVERS=all.filter(function(d){return d.camp===CAMP_NAME&&d.name;});
+        } else {
+          DRIVERS=all.filter(function(d){return d.name;});
+        }
+        if(data.notice){var nb=document.getElementById("cp-notice");nb.style.display="block";nb.textContent=data.notice;}
         buildWindow();
-        if(!_rendered){hideOverlay();render(W1,W2);_rendered=true;}
-        else if(JSON.stringify(DRIVERS)!==prev){render(W1,W2);}
-      }catch(e){if(!_rendered)showError("파싱 오류: "+e.message);}
-    }else{if(!_rendered)showError("서버 오류 HTTP "+xhr.status);}
+        hideOverlay();
+        render(W1,W2);
+      }catch(e){showError("파싱 오류: "+e.message);}
+    } else {showError("서버 오류 HTTP "+xhr.status);}
   };
-  xhr.onerror=function(){if(!_rendered)showError("네트워크 오류. 인터넷 연결을 확인해주세요.");};
-  xhr.ontimeout=function(){if(!_rendered)showError("요청 시간 초과. 다시 시도해주세요.");};
+  xhr.onerror=function(){showError("네트워크 오류. 인터넷 연결을 확인해주세요.");};
+  xhr.ontimeout=function(){showError("요청 시간 초과. 다시 시도해주세요.");};
   xhr.send();
 }
 loadData();
