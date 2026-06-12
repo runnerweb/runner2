@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>러너로지스 관리자</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+:root{
+  --bg:#f4f5fb;--surface:#fff;--surface2:#eef0f9;--border:#e0e3f0;
+  --accent:#6366f1;--acc-soft:rgba(99,102,241,.09);
+  --accent2:#818cf8;--accent-dark:#4f46e5;
+  --green:#16a34a;--gs:rgba(22,163,74,.1);
+  --red:#dc2626;--rs:rgba(220,38,38,.1);
+  --orange:#f97316;--os:rgba(249,115,22,.1);
+  --text:#1e1b4b;--text2:#4b5563;--text3:#9ca3af;
+  --shadow:0 2px 8px rgba(99,102,241,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:"Noto Sans KR",sans-serif;min-height:100vh}
+
+/* ── topbar ── */
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:0 20px;position:sticky;top:0;z-index:100}
+.topbar-inner{display:flex;align-items:center;gap:12px;height:56px}
+.logo{width:34px;height:34px;border-radius:5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 0 12px rgba(99,102,241,.3);flex-shrink:0}
+.topbar-inner h1{font-size:16px;font-weight:800}
+.topbar-inner .sub{font-size:11px;color:var(--text3)}
+.today-chip{margin-left:auto;background:var(--acc-soft);border:1px solid rgba(99,102,241,.2);border-radius:5px;padding:4px 12px;font-size:11px;color:var(--accent);font-family:"JetBrains Mono",monospace;white-space:nowrap}
+
+/* ── main ── */
+.main{max-width:960px;margin:0 auto;padding:24px 20px 60px}
+.section-label{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+
+/* ── 전체 제어 툴바 ── */
+.ctrl-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.ctrl-btn{background:var(--surface);border:1px solid var(--border);border-radius:5px;padding:6px 14px;font-size:12px;font-weight:600;cursor:pointer;color:var(--text2);font-family:"Noto Sans KR",sans-serif;transition:all .15s;white-space:nowrap}
+.ctrl-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--acc-soft)}
+.ctrl-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ctrl-sep{width:1px;height:24px;background:var(--border)}
+
+/* ── 캠프 블록 ── */
+.camp-block{background:var(--surface);border:1.5px solid var(--border);border-radius:8px;box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;transition:border-color .15s}
+.camp-block:hover{border-color:rgba(99,102,241,.3)}
+
+.camp-header{display:flex;align-items:center;gap:10px;padding:14px 16px;cursor:pointer;user-select:none}
+.camp-header:hover{background:var(--surface2)}
+.camp-icon{width:36px;height:36px;border-radius:5px;background:var(--acc-soft);border:1px solid rgba(99,102,241,.2);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.camp-info{flex:1;min-width:0}
+.camp-name{font-size:14px;font-weight:700;color:var(--text)}
+.camp-meta{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.camp-stat{font-size:10px;color:var(--text3);font-family:"JetBrains Mono",monospace}
+.ct-wk{background:var(--gs);color:var(--green);border:1px solid rgba(22,163,74,.22);border-radius:4px;padding:2px 7px;font-size:9px;font-weight:600}
+.ct-of{background:var(--rs);color:var(--red);border:1px solid rgba(220,38,38,.18);border-radius:4px;padding:2px 7px;font-size:9px;font-weight:600}
+
+.camp-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.go-btn{background:var(--acc-soft);color:var(--accent);border:1px solid rgba(99,102,241,.2);border-radius:4px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:"Noto Sans KR",sans-serif;text-decoration:none;white-space:nowrap;transition:background .15s}
+.go-btn:hover{background:rgba(99,102,241,.18)}
+.chevron{font-size:12px;color:var(--text3);transition:transform .2s;flex-shrink:0;margin-left:4px}
+.camp-block.collapsed .chevron{transform:rotate(-90deg)}
+
+/* ── 인원 목록 ── */
+.driver-list{border-top:1px solid var(--border);padding:12px 16px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:6px}
+.camp-block.collapsed .driver-list{display:none}
+.driver-item{display:flex;align-items:center;gap:7px;padding:6px 10px;background:var(--surface2);border-radius:5px;font-size:12px}
+.driver-avatar{width:26px;height:26px;border-radius:4px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:700;flex-shrink:0}
+.driver-info{min-width:0}
+.driver-name{font-weight:600;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.driver-status{font-size:10px;color:var(--text3)}
+.driver-item.is-work .driver-status{color:var(--green)}
+.driver-item.is-off  .driver-status{color:var(--red)}
+.driver-item{cursor:pointer;position:relative;transition:all .15s}
+.driver-item.selected{outline:2px solid var(--accent);background:var(--acc-soft)}
+.driver-item.hidden-driver{opacity:0;pointer-events:none;position:absolute;visibility:hidden;height:0;padding:0;margin:0;overflow:hidden}
+.driver-item .sel-check{width:14px;height:14px;border:1.5px solid var(--border);border-radius:3px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:9px;background:var(--surface);transition:all .15s}
+.driver-item.selected .sel-check{background:var(--accent);border-color:var(--accent);color:#fff}
+.sel-bar{display:none;position:sticky;bottom:0;background:var(--surface);border-top:2px solid var(--accent);padding:10px 16px;align-items:center;gap:10px;z-index:50;box-shadow:0 -4px 12px rgba(99,102,241,.12)}
+.sel-bar.active{display:flex}
+.sel-bar-txt{font-size:13px;font-weight:600;color:var(--accent);flex:1}
+.sel-bar-btn{border:none;border-radius:5px;padding:7px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:"Noto Sans KR",sans-serif;transition:background .15s}
+.sel-bar-btn.hide{background:#ef4444;color:#fff}
+.sel-bar-btn.hide:hover{background:#dc2626}
+.sel-bar-btn.cancel{background:var(--surface2);color:var(--text2)}
+.sel-bar-btn.cancel:hover{background:var(--border)}
+.sel-bar-btn.show-all{background:var(--gs);color:var(--green);border:1px solid rgba(22,163,74,.25)}
+.hidden-count-badge{display:none;background:rgba(239,68,68,.1);color:#ef4444;border:1px solid rgba(239,68,68,.25);border-radius:4px;padding:2px 7px;font-size:9px;font-weight:600;margin-left:4px}
+.hidden-count-badge.active{display:inline-block}
+
+/* 주차 숨김 상태 */
+
+/* ── 로딩 ── */
+.loading-state{text-align:center;padding:40px 20px;color:var(--text2);grid-column:1/-1}
+.loading-state .spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── 관리 섹션 ── */
+.divider{height:1px;background:var(--border);margin:8px 0 20px}
+.special-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.special-card{background:var(--surface);border:1.5px dashed var(--border);border-radius:5px;padding:18px 16px 14px;cursor:pointer;transition:all .18s;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:block}
+.special-card:hover{border-color:var(--accent);border-style:solid;box-shadow:0 6px 20px rgba(99,102,241,.12);transform:translateY(-2px)}
+.special-card .camp-icon{background:var(--surface2);border-color:var(--border);margin-bottom:10px}
+.sc-name{font-size:14px;font-weight:700;margin-bottom:3px}
+.sc-desc{font-size:10px;color:var(--text3);font-family:"JetBrains Mono",monospace}
+
+@media(max-width:600px){
+  .go-btn{padding:3px 7px;font-size:10px}
+  .driver-list{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="logo">📦</div>
+    <h1>러너로지스</h1>
+    <span class="sub">관리자</span>
+    <span class="today-chip" id="today-chip">—</span>
+  </div>
+</div>
+
+<div class="main">
+
+  <div class="section-label">📦 캠프 관리</div>
+
+  <!-- 전체 제어 툴바 -->
+  <div class="ctrl-bar">
+    <button class="ctrl-btn" onclick="toggleAllDrivers(true)">👁 전체 인원 펼치기</button>
+    <div class="ctrl-sep"></div>
+    <button class="ctrl-btn" id="sel-mode-btn" onclick="toggleSelectMode()">☑ 기사 선택 모드</button>
+    <button class="ctrl-btn" onclick="showAllHiddenDrivers()" style="color:var(--green)">✅ 숨긴 기사 전체 복원</button>
+
+  </div>
+
+  <!-- 캠프 블록 목록 -->
+  <div id="camp-list">
+    <div class="loading-state">
+      <div class="spin"></div>데이터 불러오는 중…
+    </div>
+  </div>
+
+  <div class="divider"></div>
+  <div class="section-label">⚙️ 관리 페이지</div>
+  <div class="special-grid">
+    <a class="special-card" href="backup.html">
+      <div class="camp-icon">🗄️</div>
+      <div class="sc-name">백업</div>
+      <div class="sc-desc">전체 데이터</div>
+    </a>
+    <a class="special-card" href="manager.html">
+      <div class="camp-icon">👤</div>
+      <div class="sc-name">운영자</div>
+      <div class="sc-desc">관리자 뷰</div>
+    </a>
+  </div>
+</div>
+
+<script>
+var API_URL = "https://script.google.com/macros/s/AKfycbxDnJCXQOrpZyXbQwjG4kYqpxPRal7t1JaYrLBO71p77YIrBNLUnhEEym_V0Nz0xhJZ/exec";
+
+var CAMP_MAP = [
+  {kr:"강서1캠프", en:"gangseo1"},
+  {kr:"서초1캠프", en:"seocho1"},
+  {kr:"수원1캠프", en:"suwon1"},
+  {kr:"시흥1캠프", en:"siheung1"},
+  {kr:"시흥2캠프", en:"siheung2"},
+  {kr:"안양1캠프", en:"anyang1"},
+  {kr:"인천7캠프", en:"incheon7"},
+  {kr:"인천8캠프", en:"incheon8"},
+  {kr:"일산5캠프", en:"ilsan5"},
+];
+
+var KD=["일","월","화","수","목","금","토"];
+function toDS(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+var now=new Date();now.setDate(now.getDate()+1);
+var TODAY=toDS(now);
+document.getElementById("today-chip").textContent="PDD "+TODAY+" ("+KD[now.getDay()]+")";
+
+function isWork(v){
+  if(!v||v==="")return false;
+  return !(v==="휴무"||v==="고정휴무"||v==="계획된 휴무"||v.indexOf("휴가")>-1||v.indexOf("병가")>-1||v.indexOf("퇴사")>-1||v.indexOf("용차")>-1||v.indexOf("미입차")>-1);
+}
+
+// 주차별 날짜 계산 (스케줄 페이지와 동일 로직)
+function buildWeeks(){
+  var todD=new Date(TODAY+"T00:00:00"),dow=todD.getDay();
+  var sun=new Date(todD.getFullYear(),todD.getMonth(),todD.getDate()-dow);
+  var w1=[],w2=[];
+  for(var i=0;i<7;i++){var d=new Date(sun);d.setDate(d.getDate()+i);w1.push(toDS(d));}
+  for(var i=7;i<14;i++){var d=new Date(sun);d.setDate(d.getDate()+i);w2.push(toDS(d));}
+  return {w1:w1,w2:w2};
+}
+var WEEKS=buildWeeks();
+
+// 숨김 상태 저장 (캠프별 인원목록, 주차)
+var hideDrivers={};   // {en: true/false}
+var hiddenDrivers={}; // {en__name: true}  선택 숨기기
+var selectMode=false; // 선택 모드 여부
+
+// ── 렌더링 ──────────────────────────────────────────────────────
+var ALL_DATA={};  // en → drivers[]
+
+function renderAll(drivers){
+  // 캠프별로 분류
+  var byKr={};
+  CAMP_MAP.forEach(function(c){byKr[c.kr]={en:c.en,drivers:[]};});
+  drivers.forEach(function(d){
+    if(!d.camp||!d.name)return;
+    var ck=String(d.camp).trim();
+    if(byKr[ck])byKr[ck].drivers.push(d);
+  });
+  CAMP_MAP.forEach(function(c){ALL_DATA[c.en]=byKr[c.kr].drivers;});
+
+  var html="";
+  CAMP_MAP.forEach(function(c){
+    var list=byKr[c.kr].drivers;
+    var wk=0,of=0;
+    list.forEach(function(d){
+      if(isWork((d.schedule&&d.schedule[TODAY])||""))wk++;else of++;
+    });
+    var collapsed=hideDrivers[c.en]?"collapsed":"";
+
+    html+='<div class="camp-block '+collapsed+'" id="block-'+c.en+'">';
+    // 헤더
+    html+='<div class="camp-header" onclick="toggleDrivers(\''+c.en+'\')">';
+    html+='<div class="camp-icon">📦</div>';
+    html+='<div class="camp-info">';
+    var hdc=countHiddenDrivers(c.en);
+    html+='<div class="camp-name" style="display:flex;align-items:center;gap:6px">'+c.kr+'<span class="hidden-count-badge'+(hdc>0?' active':'')+'" id="hbadge-'+c.en+'">'+hdc+'명 숨김</span></div>';
+    html+='<div class="camp-meta">';
+    html+='<span class="camp-stat">총 '+list.length+'명</span>';
+    html+='<span class="ct-wk">출근 '+wk+'</span>';
+    html+='<span class="ct-of">휴무 '+of+'</span>';
+    html+='</div></div>';
+    // 액션 버튼
+    html+='<div class="camp-actions" onclick="event.stopPropagation()">';
+    html+='<a class="go-btn" href="'+c.en+'.html">바로가기 →</a>';
+    html+='</div>';
+    html+='<span class="chevron">▾</span>';
+    html+='</div>';
+    // 주차 숨김 표시 바
+    // 인원 목록
+    html+='<div class="driver-list" id="dlist-'+c.en+'">';
+    if(list.length===0){
+      html+='<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:4px">기사 없음</div>';
+    } else {
+      list.forEach(function(d){
+        var sv=(d.schedule&&d.schedule[TODAY])||"";
+        var wc=isWork(sv)?"is-work":"is-off";
+        var sLabel=sv||"—";
+        var dKey=c.en+'__'+d.name;
+        var isHidden=hiddenDrivers[dKey]?'hidden-driver':'';
+        var hidBadgeStyle=hiddenDrivers[dKey]?'display:inline-block':'display:none';
+        html+='<div class="driver-item '+wc+' '+isHidden+'" data-key="'+dKey+'" onclick="onDriverClick(this,event)">';
+        html+='<div class="sel-check"></div>';
+        html+='<div class="driver-avatar">'+( d.name?d.name.charAt(0):"?" )+'</div>';
+        html+='<div class="driver-info">';
+        html+='<div class="driver-name">'+escH(d.name)+'</div>';
+        html+='<div class="driver-status">'+escH(sLabel)+'</div>';
+        html+='</div></div>';
+      });
+    }
+    html+='</div>';  // driver-list
+    html+='</div>';  // camp-block
+  });
+  document.getElementById("camp-list").innerHTML=html;
+  // 숨김 상태 복원
+}
+
+function escH(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// ── 기사 선택 모드 ───────────────────────────────────────────────
+function toggleSelectMode(){
+  selectMode=!selectMode;
+  var btn=document.getElementById("sel-mode-btn");
+  if(btn){
+    btn.classList.toggle("active",selectMode);
+    btn.textContent=selectMode?"✖ 선택 모드 종료":"☑ 기사 선택 모드";
+  }
+  document.body.classList.toggle("select-mode",selectMode);
+  if(!selectMode) clearSelection();
+  updateSelBar();
+}
+
+function onDriverClick(el,e){
+  if(!selectMode) return;
+  e.stopPropagation();
+  el.classList.toggle("selected");
+  updateSelBar();
+}
+
+function updateSelBar(){
+  var selected=document.querySelectorAll(".driver-item.selected");
+  var bar=document.getElementById("sel-bar");
+  var txt=document.getElementById("sel-bar-txt");
+  if(!bar)return;
+  if(selected.length>0 && selectMode){
+    bar.classList.add("active");
+    txt.textContent=selected.length+"명 선택됨";
+  } else {
+    bar.classList.remove("active");
+  }
+}
+
+function clearSelection(){
+  document.querySelectorAll(".driver-item.selected").forEach(function(el){
+    el.classList.remove("selected");
+  });
+  updateSelBar();
+}
+
+function hideSelectedDrivers(){
+  var selected=document.querySelectorAll(".driver-item.selected");
+  selected.forEach(function(el){
+    var key=el.getAttribute("data-key");
+    if(key){
+      hiddenDrivers[key]=true;
+      el.classList.add("hidden-driver");
+      el.classList.remove("selected");
+    }
+  });
+  // 캠프별 배지 갱신
+  CAMP_MAP.forEach(function(c){updateHiddenBadge(c.en);});
+  saveHiddenDrivers();
+  updateSelBar();
+}
+
+function showAllHiddenDrivers(){
+  hiddenDrivers={};
+  document.querySelectorAll(".driver-item.hidden-driver").forEach(function(el){
+    el.classList.remove("hidden-driver");
+  });
+  CAMP_MAP.forEach(function(c){updateHiddenBadge(c.en);});
+  saveHiddenDrivers();
+}
+
+function countHiddenDrivers(en){
+  return Object.keys(hiddenDrivers).filter(function(k){
+    return k.indexOf(en+"__")===0;
+  }).length;
+}
+
+function updateHiddenBadge(en){
+  var badge=document.getElementById("hbadge-"+en);
+  if(!badge)return;
+  var cnt=countHiddenDrivers(en);
+  badge.textContent=cnt+"명 숨김";
+  badge.classList.toggle("active",cnt>0);
+}
+
+function saveHiddenDrivers(){
+  try{localStorage.setItem("rl_hidden_drivers",JSON.stringify(hiddenDrivers));}catch(e){}
+}
+function loadHiddenDrivers(){
+  try{
+    var s=localStorage.getItem("rl_hidden_drivers");
+    if(s)hiddenDrivers=JSON.parse(s);
+  }catch(e){}
+}
+
+// ── 인원 목록 토글 ───────────────────────────────────────────────
+function toggleDrivers(en){
+  var block=document.getElementById("block-"+en);
+  if(!block)return;
+  var collapsed=block.classList.toggle("collapsed");
+  hideDrivers[en]=collapsed;
+}
+function toggleAllDrivers(show){
+  CAMP_MAP.forEach(function(c){
+    var block=document.getElementById("block-"+c.en);
+    if(!block)return;
+    if(show){block.classList.remove("collapsed");hideDrivers[c.en]=false;}
+    else{block.classList.add("collapsed");hideDrivers[c.en]=true;}
+  });
+}
+
+
+
+// ── 데이터 로드 ─────────────────────────────────────────────────
+function loadData(){
+  var xhr=new XMLHttpRequest();
+  xhr.open("GET",API_URL+"?nocache=1&_t="+Date.now(),true);xhr.timeout=30000;
+  xhr.onload=function(){
+    if(xhr.status>=200&&xhr.status<300){
+      try{
+        var data=JSON.parse(xhr.responseText);
+        if(data.error)throw new Error(data.error);
+        renderAll(data.drivers||[]);
+      }catch(e){
+        document.getElementById("camp-list").innerHTML='<div style="padding:24px;color:var(--red);font-size:13px">데이터 오류: '+e.message+'</div>';
+      }
+    }
+  };
+  xhr.onerror=xhr.ontimeout=function(){
+    document.getElementById("camp-list").innerHTML='<div style="padding:24px;color:var(--red);font-size:13px">연결 오류 — 잠시 후 다시 시도하세요</div>';
+  };
+  xhr.send();
+}
+
+loadHiddenDrivers();
+loadData();
+</script>
+<div class="sel-bar" id="sel-bar">
+  <span class="sel-bar-txt" id="sel-bar-txt">0명 선택됨</span>
+  <button class="sel-bar-btn show-all" onclick="showAllHiddenDrivers()">✅ 숨김 전체 복원</button>
+  <button class="sel-bar-btn hide" onclick="hideSelectedDrivers()">🙈 선택 기사 숨기기</button>
+  <button class="sel-bar-btn cancel" onclick="clearSelection()">취소</button>
+</div>
+</body>
+</html>
